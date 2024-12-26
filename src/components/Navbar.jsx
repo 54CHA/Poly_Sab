@@ -39,7 +39,7 @@ const Navbar = () => {
             )}
             <Button variant="ghost" size="icon" asChild>
               <a
-                href="https://github.com/yourusername/poly-saboteur"
+                href="https://github.com/54CHA/Poly_Saboteur"
                 target="_blank"
                 rel="noopener noreferrer"
               >
