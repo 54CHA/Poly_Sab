@@ -36,8 +36,15 @@ const Main = () => {
       const savedAnswers = localStorage.getItem("answers");
 
       if (savedSubjectId && savedAnswers) {
-        setSelectedSubject(parseInt(savedSubjectId));
-        setAnswers(JSON.parse(savedAnswers));
+        const parsedId = parseInt(savedSubjectId);
+        if (!isNaN(parsedId)) {
+          setSelectedSubject(parsedId);
+          setAnswers(JSON.parse(savedAnswers));
+          setDisplayLimit(30);
+        } else {
+          localStorage.removeItem("selectedSubjectId");
+          localStorage.removeItem("answers");
+        }
       }
     };
 
@@ -74,12 +81,13 @@ const Main = () => {
 
       setSelectedSubject(subjectId);
       setAnswers(data.answers);
+      setDisplayLimit(30);
       localStorage.setItem("selectedSubjectId", subjectId.toString());
       localStorage.setItem("answers", JSON.stringify(data.answers));
 
       toast.dismiss(loadingToast);
       toast.success("Предмет загружен", {
-        description: "Вопросы и ответы успешно загружены",
+        description: "Вопросы и ответы ус��ешно загружены",
         duration: 3000,
       });
     } catch (error) {
@@ -174,13 +182,11 @@ const Main = () => {
     const groups = {};
     const nonRussianGroups = {};
 
-    // Russian alphabet pattern
     const russianPattern = /^[А-Яа-я]/;
 
     subjects.forEach((subject) => {
       const firstLetter = subject.name.charAt(0).toUpperCase();
 
-      // Check if the first letter is Russian
       if (russianPattern.test(firstLetter)) {
         if (!groups[firstLetter]) {
           groups[firstLetter] = [];
@@ -194,7 +200,6 @@ const Main = () => {
       }
     });
 
-    // Combine Russian and non-Russian groups
     return {
       ...groups,
       ...nonRussianGroups,
@@ -204,6 +209,7 @@ const Main = () => {
   const handleResetSubject = () => {
     setSelectedSubject(null);
     setAnswers([]);
+    setDisplayLimit(30);
     localStorage.removeItem("selectedSubjectId");
     localStorage.removeItem("answers");
     toast.success("Сброшено", {
@@ -239,7 +245,7 @@ const Main = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-[var(--radix-dropdown-trigger-width)]"
+              className="w-[var(--radix-dropdown-trigger-width)] max-h-[60vh] overflow-y-auto"
             >
               {selectedSubject && (
                 <>
@@ -249,16 +255,31 @@ const Main = () => {
                   <DropdownMenuSeparator />
                 </>
               )}
-              {subjects.map((subject) => (
-                <DropdownMenuItem
-                  key={subject.id}
-                  onClick={() => handleSubjectSelect(subject.id)}
-                >
-                  <div className="flex flex-col w-full">
-                    <div className="truncate">{subject.name}</div>
+
+              {Object.entries(groupedSubjects).map(
+                ([letter, letterSubjects]) => (
+                  <div key={letter}>
+                    <DropdownMenuItem
+                      className="text-sm text-muted-foreground"
+                      disabled
+                    >
+                      {letter}
+                    </DropdownMenuItem>
+                    {letterSubjects.map((subject) => (
+                      <DropdownMenuItem
+                        key={subject.id}
+                        onClick={() => handleSubjectSelect(subject.id)}
+                        className="pl-6"
+                      >
+                        <div className="flex flex-col w-full py-1">
+                          <div className="truncate">{subject.name}</div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
                   </div>
-                </DropdownMenuItem>
-              ))}
+                )
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
