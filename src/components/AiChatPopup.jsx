@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Send, Brain } from "lucide-react";
+import { X, Send, Brain, Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGeminiResponse } from "@/lib/gemini";
 import { toast } from "sonner";
@@ -15,14 +15,19 @@ const LoadingDots = () => (
 );
 
 const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
-  const [messages, setMessages] = useState(
-    [initialQuery ? { role: "user", content: initialQuery } : null].filter(
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Используется API Gemini Flash 2.0 Experimental",
+    },
+    ...[initialQuery ? { role: "user", content: initialQuery } : null].filter(
       Boolean
-    )
-  );
+    ),
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,6 +71,10 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     }
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -73,15 +82,31 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
       className="fixed inset-0 shadow-lg z-50 md:p-8"
       onClick={handleBackdropClick}
     >
-      <div className="fixed right-4 bottom-4 md:right-8 md:bottom-8 w-[calc(100%-2rem)] md:w-[400px] h-[600px] bg-card rounded-lg border shadow-lg flex flex-col">
+      <div
+        className={cn(
+          "fixed bg-card rounded-lg border shadow-lg flex flex-col transition-all duration-200",
+          isFullscreen
+            ? "inset-4"
+            : "right-4 bottom-4 md:right-8 md:bottom-8 w-[calc(100%-2rem)] md:w-[400px] h-[600px]"
+        )}
+      >
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
             <h3 className="font-semibold">Задать вопрос ИИ</h3>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
