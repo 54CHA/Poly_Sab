@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import AiChatPopup from "./AiChatPopup";
 
 const Main = () => {
   const [answers, setAnswers] = useState([]);
@@ -28,6 +29,7 @@ const Main = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [localAnswers, setLocalAnswers] = useState([]);
   const [displayLimit, setDisplayLimit] = useState(30);
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -87,7 +89,7 @@ const Main = () => {
 
       toast.dismiss(loadingToast);
       toast.success("Предмет загружен", {
-        description: "Вопросы и ответы ус��ешно загружены",
+        description: "Вопросы и ответы успешно загружены",
         duration: 3000,
       });
     } catch (error) {
@@ -162,13 +164,7 @@ const Main = () => {
   };
 
   const handleAiQuery = () => {
-    window.open(
-      `https://duckduckgo.com/?q=${searchQuery.replace(
-        /\s+/g,
-        "+"
-      )}&t=ffab&ia=chat`,
-      "_blank"
-    );
+    setIsAiChatOpen(true);
   };
 
   const copyToClipboard = (text) => {
@@ -511,6 +507,12 @@ const Main = () => {
           )}
         </div>
       </div>
+
+      <AiChatPopup
+        isOpen={isAiChatOpen}
+        onClose={() => setIsAiChatOpen(false)}
+        initialQuery={searchQuery}
+      />
     </main>
   );
 };
