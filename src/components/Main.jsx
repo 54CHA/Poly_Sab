@@ -27,6 +27,7 @@ const Main = () => {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [isHidden, setIsHidden] = useState(false);
+  const [localAnswers, setLocalAnswers] = useState([]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -92,28 +93,23 @@ const Main = () => {
       const text = await file.text();
       const parsedAnswers = JSON.parse(text);
 
-      const subjectName = file.name.replace(".json", "");
+      console.log("Parsed Answers:", parsedAnswers);
 
-      const { data, error } = await supabase
-        .from("subjects")
-        .insert([
-          {
-            name: subjectName,
-            answers: parsedAnswers,
-          },
-        ])
-        .select();
-
-      if (error) throw error;
-
-      toast.success("Файл загружен", {
-        description: "Предмет успешно добавлен в базу данных",
-      });
-
-      fetchSubjects();
+      if (
+        Array.isArray(parsedAnswers) &&
+        parsedAnswers.every((item) => item.question && item.answer)
+      ) {
+        setLocalAnswers(parsedAnswers);
+        toast.success("Файл загружен", {
+          description: "Ответы успешно загружены локально",
+        });
+      } else {
+        throw new Error("Invalid JSON format");
+      }
     } catch (error) {
+      console.error("Error loading file:", error);
       toast.error("Ошибка", {
-        description: "Не удалось загрузить файл в базу данных",
+        description: "Не удалось загрузить файл",
       });
     }
   };
@@ -306,32 +302,34 @@ const Main = () => {
             </div>
           </div>
 
-          {answers.length > 0 ? (
+          {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
               {/* Mobile View */}
               <div className="grid grid-cols-1 divide-y md:hidden">
-                {filteredAnswers.map((item, index) => (
-                  <div key={index} className="p-4 space-y-2">
-                    <div
-                      onClick={() => copyToClipboard(item.question)}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors rounded p-2"
-                    >
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Вопрос:
+                {(localAnswers.length > 0 ? localAnswers : filteredAnswers).map(
+                  (item, index) => (
+                    <div key={index} className="p-4 space-y-2">
+                      <div
+                        onClick={() => copyToClipboard(item.question)}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors rounded p-2"
+                      >
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Вопрос:
+                        </div>
+                        <div className="text-sm">{item.question}</div>
                       </div>
-                      <div className="text-sm">{item.question}</div>
-                    </div>
-                    <div
-                      onClick={() => copyToClipboard(item.answer)}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors rounded p-2"
-                    >
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Ответ:
+                      <div
+                        onClick={() => copyToClipboard(item.answer)}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors rounded p-2"
+                      >
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Ответ:
+                        </div>
+                        <div className="text-sm">{item.answer}</div>
                       </div>
-                      <div className="text-sm">{item.answer}</div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               {/* Desktop View */}
@@ -344,7 +342,10 @@ const Main = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAnswers.map((item, index) => (
+                    {(localAnswers.length > 0
+                      ? localAnswers
+                      : filteredAnswers
+                    ).map((item, index) => (
                       <TableRow key={index}>
                         <TableCell
                           onClick={() => copyToClipboard(item.question)}
