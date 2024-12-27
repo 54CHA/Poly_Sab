@@ -16,8 +16,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +26,8 @@ const Main = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
-  const [isHidden, setIsHidden] = useState(false);
   const [localAnswers, setLocalAnswers] = useState([]);
+  const [displayLimit, setDisplayLimit] = useState(30);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -46,11 +46,14 @@ const Main = () => {
 
   const fetchSubjects = async () => {
     try {
-      const { data, error } = await supabase.from("subjects").select("*");
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("id, name, questions_count, file_name");
 
       if (error) throw error;
-      setSubjects(data);
-    } catch (error) {
+      const sortedSubjects = data.sort((a, b) => a.name.localeCompare(b.name));
+      setSubjects(sortedSubjects);
+    } catch (err) {
       toast.error("Ошибка", {
         description: "Не удалось загрузить список предметов",
       });
@@ -58,6 +61,8 @@ const Main = () => {
   };
 
   const handleSubjectSelect = async (subjectId) => {
+    const loadingToast = toast.loading("Загрузка ответов...");
+
     try {
       const { data, error } = await supabase
         .from("subjects")
@@ -72,12 +77,14 @@ const Main = () => {
       localStorage.setItem("selectedSubjectId", subjectId.toString());
       localStorage.setItem("answers", JSON.stringify(data.answers));
 
+      toast.dismiss(loadingToast);
       toast.success("Предмет загружен", {
         description: "Вопросы и ответы успешно загружены",
         duration: 3000,
       });
     } catch (error) {
       console.error("Error loading answers:", error);
+      toast.dismiss(loadingToast);
       toast.error("Ошибка", {
         description: "Не удалось загрузить ответы",
         duration: 3000,
@@ -115,15 +122,17 @@ const Main = () => {
   };
 
   const filteredAnswers = useMemo(() => {
-    if (!searchQuery.trim()) return answers;
+    if (!searchQuery.trim()) return answers.slice(0, displayLimit);
 
     const query = searchQuery.toLowerCase();
-    return answers.filter(
-      (item) =>
-        item.question.toLowerCase().includes(query) ||
-        item.answer.toLowerCase().includes(query)
-    );
-  }, [answers, searchQuery]);
+    return answers
+      .filter(
+        (item) =>
+          item.question.toLowerCase().includes(query) ||
+          item.answer.toLowerCase().includes(query)
+      )
+      .slice(0, displayLimit);
+  }, [answers, searchQuery, displayLimit]);
 
   const handleSearch = (engine) => {
     if (!searchQuery.trim()) {
@@ -161,21 +170,151 @@ const Main = () => {
     });
   };
 
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    setIsHidden(!isHidden);
+  const groupedSubjects = useMemo(() => {
+    const groups = {};
+    const nonRussianGroups = {};
+
+    // Russian alphabet pattern
+    const russianPattern = /^[А-Яа-я]/;
+
+    subjects.forEach((subject) => {
+      const firstLetter = subject.name.charAt(0).toUpperCase();
+
+      // Check if the first letter is Russian
+      if (russianPattern.test(firstLetter)) {
+        if (!groups[firstLetter]) {
+          groups[firstLetter] = [];
+        }
+        groups[firstLetter].push(subject);
+      } else {
+        if (!nonRussianGroups[firstLetter]) {
+          nonRussianGroups[firstLetter] = [];
+        }
+        nonRussianGroups[firstLetter].push(subject);
+      }
+    });
+
+    // Combine Russian and non-Russian groups
+    return {
+      ...groups,
+      ...nonRussianGroups,
+    };
+  }, [subjects]);
+
+  const handleResetSubject = () => {
+    setSelectedSubject(null);
+    setAnswers([]);
+    localStorage.removeItem("selectedSubjectId");
+    localStorage.removeItem("answers");
+    toast.success("Сброшено", {
+      description: "Выбранный предмет был сброшен",
+      duration: 3000,
+    });
+  };
+
+  const handleLoadMore = () => {
+    setDisplayLimit((prev) => prev + 30);
   };
 
   return (
-    <main
-      className={cn(
-        "max-w-[1000px] mx-auto p-4 sm:p-6 space-y-8",
-        isHidden && "bg-background min-h-screen fixed inset-0 w-full max-w-none"
-      )}
-      onContextMenu={handleContextMenu}
-    >
-      {!isHidden && (
-        <>
+    <main className="max-w-[1200px] mx-auto p-4 sm:p-6">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Mobile Dropdown */}
+        <div className="md:hidden w-full">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full gap-2 justify-between"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Database className="h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {subjects.find((s) => s.id === selectedSubject)?.name ||
+                      "Выберите предмет"}
+                  </span>
+                </div>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="w-[var(--radix-dropdown-trigger-width)]"
+            >
+              {selectedSubject && (
+                <>
+                  <DropdownMenuItem onClick={handleResetSubject}>
+                    Сбросить выбор
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {subjects.map((subject) => (
+                <DropdownMenuItem
+                  key={subject.id}
+                  onClick={() => handleSubjectSelect(subject.id)}
+                >
+                  <div className="flex flex-col w-full">
+                    <div className="truncate">{subject.name}</div>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-64 shrink-0 space-y-4 sticky top-4 h-[calc(100vh-8rem)]">
+          <div className="rounded-lg border bg-card p-4 h-full">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">Предметы</h3>
+              {selectedSubject && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetSubject}
+                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  Сбросить
+                </Button>
+              )}
+            </div>
+            <div
+              className="space-y-4 overflow-y-auto pr-2"
+              style={{ height: "calc(100% - 2rem)" }}
+            >
+              {Object.entries(groupedSubjects).map(
+                ([letter, letterSubjects]) => (
+                  <div key={letter} className="space-y-1">
+                    <div className="text-sm font-medium text-muted-foreground px-3 sticky top-0 bg-card z-10">
+                      {letter}
+                    </div>
+                    {letterSubjects.map((subject) => (
+                      <button
+                        key={subject.id}
+                        onClick={() => handleSubjectSelect(subject.id)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                          "hover:bg-muted/50",
+                          selectedSubject === subject.id &&
+                            "bg-muted font-medium"
+                        )}
+                      >
+                        <div className="truncate">{subject.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {subject.questions_count} вопросов
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 space-y-6">
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 sm:p-6">
             <div className="flex flex-col gap-4 sm:gap-6">
               <div className="space-y-2">
@@ -254,60 +393,19 @@ const Main = () => {
                   </Button>
                 </div>
               </div>
-
-              <div className="flex justify-start">
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full md:max-w-[200px] gap-2 justify-between"
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <Database className="h-4 w-4 shrink-0" />
-                        <span className="truncate">
-                          {subjects.find((s) => s.id === selectedSubject)
-                            ?.name || "Предмет"}
-                        </span>
-                      </div>
-                      <ChevronDown className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    sideOffset={5}
-                    className="w-[var(--radix-dropdown-trigger-width)]"
-                  >
-                    {subjects.map((subject) => (
-                      <DropdownMenuItem
-                        key={subject.id}
-                        onClick={() => handleSubjectSelect(subject.id)}
-                      >
-                        {subject.name}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedSubject(null);
-                        setAnswers([]);
-                        localStorage.removeItem("selectedSubjectId");
-                        localStorage.removeItem("answers");
-                      }}
-                    >
-                      Очистить
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
             </div>
           </div>
 
+          {/* Results Section */}
           {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              {/* Mobile View */}
-              <div className="grid grid-cols-1 divide-y md:hidden">
-                {(localAnswers.length > 0 ? localAnswers : filteredAnswers).map(
-                  (item, index) => (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                {/* Mobile View */}
+                <div className="grid grid-cols-1 divide-y md:hidden">
+                  {(localAnswers.length > 0
+                    ? localAnswers
+                    : filteredAnswers
+                  ).map((item, index) => (
                     <div key={index} className="p-4 space-y-2">
                       <div
                         onClick={() => copyToClipboard(item.question)}
@@ -328,42 +426,53 @@ const Main = () => {
                         <div className="text-sm">{item.answer}</div>
                       </div>
                     </div>
-                  )
-                )}
+                  ))}
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Вопрос</TableHead>
+                        <TableHead>Ответ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(localAnswers.length > 0
+                        ? localAnswers
+                        : filteredAnswers
+                      ).map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell
+                            onClick={() => copyToClipboard(item.question)}
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
+                            {item.question}
+                          </TableCell>
+                          <TableCell
+                            onClick={() => copyToClipboard(item.answer)}
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
+                            {item.answer}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
-              {/* Desktop View */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[40%]">Вопрос</TableHead>
-                      <TableHead>Ответ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(localAnswers.length > 0
-                      ? localAnswers
-                      : filteredAnswers
-                    ).map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell
-                          onClick={() => copyToClipboard(item.question)}
-                          className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        >
-                          {item.question}
-                        </TableCell>
-                        <TableCell
-                          onClick={() => copyToClipboard(item.answer)}
-                          className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        >
-                          {item.answer}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              {/* Add Load More button */}
+              {!localAnswers.length && answers.length > displayLimit && (
+                <Button
+                  variant="secondary"
+                  onClick={handleLoadMore}
+                  className="w-full"
+                >
+                  Загрузить еще
+                </Button>
+              )}
             </div>
           ) : (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-12">
@@ -379,8 +488,8 @@ const Main = () => {
               </div>
             </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </main>
   );
 };
