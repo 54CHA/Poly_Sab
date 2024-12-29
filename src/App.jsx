@@ -13,13 +13,13 @@ import LoginPage from "./pages/LoginPage";
 import { useState, useCallback, useEffect } from "react";
 import { cn } from "./lib/utils";
 import Loader from "./components/Loader";
+import UnverifiedAnswersPage from "./pages/UnverifiedAnswersPage";
 
 function App() {
   const [isHidden, setIsHidden] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate initial loading
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -59,6 +59,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/unverified"
+                element={
+                  <ProtectedRoute>
+                    <UnverifiedAnswersPage />
                   </ProtectedRoute>
                 }
               />

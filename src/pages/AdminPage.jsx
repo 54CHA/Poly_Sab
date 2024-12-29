@@ -9,9 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { FileUp, Trash2, Download } from "lucide-react";
+import { FileUp, Trash2, Download, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
+import { Link } from "react-router-dom";
 
 const AdminPage = () => {
   const [subjects, setSubjects] = useState([]);
@@ -61,11 +62,17 @@ const AdminPage = () => {
         );
       }
 
+      // Initialize all answers with unverified: false
+      const processedAnswers = parsedAnswers.map(answer => ({
+        ...answer,
+        unverified: false
+      }));
+
       const { error } = await supabase.from("subjects").insert([
         {
           name: newSubjectName.trim(),
-          answers: parsedAnswers,
-          questions_count: parsedAnswers.length,
+          answers: processedAnswers,
+          questions_count: processedAnswers.length,
           file_name: file.name,
           uploaded_at: new Date().toISOString(),
         },
@@ -74,7 +81,7 @@ const AdminPage = () => {
       if (error) throw error;
 
       toast.success("Успешно", {
-        description: `Предмет "${newSubjectName}" добавлен (${parsedAnswers.length} вопросов)`,
+        description: `Предмет "${newSubjectName}" добавлен (${processedAnswers.length} вопросов)`,
       });
 
       setNewSubjectName("");
@@ -154,6 +161,12 @@ const AdminPage = () => {
             Загрузка и управление базой вопросов
           </p>
         </div>
+        <Button variant="outline" asChild>
+          <Link to="/admin/unverified" className="gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Непроверенные ответы
+          </Link>
+        </Button>
       </div>
 
       <div className="rounded-lg border bg-card p-6">

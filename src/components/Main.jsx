@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Search, FileUp, Brain, Database, ChevronDown } from "lucide-react";
+import { Search, FileUp, Brain, Database, ChevronDown, PlusCircle, AlertCircle, X, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import {
@@ -37,6 +37,11 @@ const Main = () => {
   const [localAnswers, setLocalAnswers] = useState([]);
   const [displayLimit, setDisplayLimit] = useState(30);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const [isAddingAnswer, setIsAddingAnswer] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAnswer, setNewAnswer] = useState("");
+  const [localSubjectAnswers, setLocalSubjectAnswers] = useState({});
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -60,6 +65,32 @@ const Main = () => {
     loadInitialData();
   }, []);
 
+  useEffect(() => {
+    const savedAnswers = localStorage.getItem("localSubjectAnswers");
+    if (savedAnswers) {
+      setLocalSubjectAnswers(JSON.parse(savedAnswers));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(localSubjectAnswers).length > 0) {
+      localStorage.setItem("localSubjectAnswers", JSON.stringify(localSubjectAnswers));
+    }
+  }, [localSubjectAnswers]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 500);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const fetchSubjects = async () => {
     try {
       const { data, error } = await supabase
@@ -80,19 +111,21 @@ const Main = () => {
     const loadingToast = toast.loading("Загрузка ответов...");
 
     try {
+      const id = String(subjectId);
+
       const { data, error } = await supabase
         .from("subjects")
         .select("answers")
-        .eq("id", subjectId)
+        .eq("id", id)
         .single();
 
       if (error) throw error;
 
-      setSelectedSubject(subjectId);
+      setSelectedSubject(id);
       setAnswers(data.answers);
       setDisplayLimit(30);
       setLocalAnswers([]);
-      localStorage.setItem("selectedSubjectId", subjectId.toString());
+      localStorage.setItem("selectedSubjectId", id);
       localStorage.setItem("answers", JSON.stringify(data.answers));
 
       toast.dismiss(loadingToast);
@@ -122,38 +155,39 @@ const Main = () => {
         Array.isArray(parsedAnswers) &&
         parsedAnswers.every((item) => item.question && item.answer)
       ) {
-        setLocalAnswers(parsedAnswers);
+        const processedAnswers = parsedAnswers.map(answer => ({
+          question: answer.question,
+          answer: answer.answer,
+          unverified: false,
+          addedAt: new Date().toISOString()
+        }));
+
+        setLocalAnswers(processedAnswers);
         setSelectedSubject(null);
         setAnswers([]);
+        setDisplayLimit(30);
+        
+        localStorage.removeItem("selectedSubjectId");
+        localStorage.removeItem("answers");
+
         toast.success("Файл загружен", {
-          description: "Ответы успешно загружены локально",
+          description: `Загружено ${processedAnswers.length} вопросов`,
         });
       } else {
-        throw new Error("Invalid JSON format");
+        throw new Error("Неверный формат JSON");
       }
     } catch (error) {
       console.error("Error loading file:", error);
       toast.error("Ошибка", {
-        description: "Не удалось загрузить файл",
+        description: "Не удалось загрузить файл. Проверьте формат JSON",
       });
     } finally {
       event.target.value = '';
     }
   };
 
-  const handleClearLocal = () => {
-    setLocalAnswers([]);
-    setDisplayLimit(30);
-    const fileInput = document.getElementById("file-input");
-    if (fileInput) fileInput.value = '';
-    
-    toast.success("Сброшено", {
-      description: "Локальный файл был сброшен",
-    });
-  };
-
   const filteredAnswers = useMemo(() => {
-    const currentAnswers = localAnswers.length > 0 ? localAnswers : answers;
+    const currentAnswers = selectedSubject ? answers : localAnswers;
 
     if (!searchQuery.trim()) {
       return currentAnswers.slice(0, displayLimit);
@@ -167,7 +201,7 @@ const Main = () => {
           item.answer.toLowerCase().includes(query)
       )
       .slice(0, displayLimit);
-  }, [answers, localAnswers, searchQuery, displayLimit]);
+  }, [answers, localAnswers, selectedSubject, searchQuery, displayLimit]);
 
   const handleSearch = (engine) => {
     if (!searchQuery.trim()) {
@@ -243,6 +277,92 @@ const Main = () => {
     setDisplayLimit((prev) => prev + 30);
   };
 
+  const handleAddAnswer = async () => {
+    if (!selectedSubject) {
+      toast.error("Ошибка", {
+        description: "Сначала выберите предмет",
+      });
+      return;
+    }
+
+    if (!newQuestion.trim() || !newAnswer.trim()) {
+      toast.error("Ошибка", {
+        description: "Заполните все поля",
+      });
+      return;
+    }
+
+    const loadingToast = toast.loading("Добавление ответа...");
+
+    try {
+      const id = String(selectedSubject);
+
+      const { data: currentData, error: fetchError } = await supabase
+        .from("subjects")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw fetchError;
+      }
+
+      const newItem = {
+        question: newQuestion.trim(),
+        answer: newAnswer.trim(),
+        unverified: true,
+        addedAt: new Date().toISOString(),
+      };
+
+      console.log("Current data:", currentData);
+      console.log("New item:", newItem);
+
+      const updatedAnswers = [...currentData.answers, newItem];
+
+      const { data: updateData, error: updateError } = await supabase
+        .from("subjects")
+        .update({ 
+          answers: updatedAnswers,
+          questions_count: updatedAnswers.length
+        })
+        .eq("id", id)
+        .select();
+
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
+
+      console.log("Update successful:", updateData);
+
+      setAnswers(updatedAnswers);
+      localStorage.setItem("answers", JSON.stringify(updatedAnswers));
+
+      setNewQuestion("");
+      setNewAnswer("");
+      setIsAddingAnswer(false);
+      
+      toast.dismiss(loadingToast);
+      toast.success("Ответ добавлен", {
+        description: "Ваш ответ успешно добавлен в базу данных",
+      });
+
+    } catch (error) {
+      console.error("Full error details:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Ошибка", {
+        description: `Не удалось добавить ответ: ${error.message || "Неизвестная ошибка"}`,
+      });
+    }
+  };
+
+  const handleCancelAdd = () => {
+    setNewQuestion("");
+    setNewAnswer("");
+    setIsAddingAnswer(false);
+  };
+
   return (
     <main className="max-w-[1200px] mx-auto p-4 sm:p-6">
       <div className="flex flex-col md:flex-row gap-6">
@@ -254,118 +374,171 @@ const Main = () => {
           groupedSubjects={groupedSubjects}
         />
 
-        {/* Main Content */}
         <div className="flex-1 space-y-6">
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 sm:p-6">
-            <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="flex justify-between items-center">
-                <div className="space-y-2">
+            {isAddingAnswer ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold tracking-tight">
-                    Поиск ответов
+                    Добавить ответ
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Выберите предмет из базы данных или загрузите новый JSON файл
-                  </p>
-                </div>
-                {localAnswers.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleClearLocal}
-                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                    onClick={handleCancelAdd}
                   >
-                    Сбросить файл
+                    <X className="h-4 w-4 mr-2" />
+                    Отмена
                   </Button>
-                )}
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-2">
-                <div className="flex flex-col md:flex-row gap-2 w-full md:w-[60%]">
-                  <Input
-                    type="text"
-                    placeholder="Поиск..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
                 </div>
-                <div className="grid grid-cols-2 md:flex gap-2 w-full md:w-auto">
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="default"
-                        className="gap-2 w-full md:w-auto"
-                      >
-                        <Search className="h-4 w-4" />
-                        Поиск
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      sideOffset={5}
-                      className="w-[var(--radix-dropdown-trigger-width)]"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => handleSearch("duckduckgo")}
-                      >
-                        DuckDuckGo
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSearch("google")}>
-                        Google
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSearch("yandex")}>
-                        Яндекс
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button
-                    variant="default"
-                    onClick={handleAiQuery}
-                    className="gap-2 w-full md:w-auto"
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">
+                      Вопрос
+                    </label>
+                    <Input
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      placeholder="Введите вопрос"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">
+                      Ответ
+                    </label>
+                    <Input
+                      value={newAnswer}
+                      onChange={(e) => setNewAnswer(e.target.value)}
+                      placeholder="Введите ответ"
+                    />
+                  </div>
+
+                  <div className="flex items-center text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <p>
+                      Ваш ответ будет помечен как непроверенный.
+                    </p>
+                  </div>
+
+                  <Button 
+                    className="w-full"
+                    onClick={handleAddAnswer}
                   >
-                    <Brain className="h-4 w-4" />
-                    ИИ
+                    Добавить ответ
                   </Button>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".json"
-                    onChange={handleFileUpload}
-                    id="file-input"
-                  />
-                  <TooltipProvider>
-                    <Tooltip delayDuration={50}>
-                      <TooltipTrigger asChild>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4 sm:gap-6">
+                <div className="flex justify-between items-center">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-semibold tracking-tight">
+                      Поиск ответов
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Выберите предмет из базы данных или загрузите новый JSON файл
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddingAnswer(true)}
+                  className="w-full"
+                  disabled={!selectedSubject}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Добавить свой ответ
+                </Button>
+
+                <div className="flex flex-col md:flex-row gap-2">
+                  <div className="flex flex-col md:flex-row gap-2 w-full md:w-[60%]">
+                    <Input
+                      type="text"
+                      placeholder="Поиск..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 md:flex gap-2 w-full md:w-auto">
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="default"
-                          onClick={() => document.getElementById("file-input").click()}
-                          className="gap-2 w-full md:w-auto col-span-2 md:col-span-1"
+                          className="gap-2 w-full md:w-auto"
                         >
-                          <FileUp className="h-4 w-4" />
-                          Загрузить
+                          <Search className="h-4 w-4" />
+                          Поиск
+                          <ChevronDown className="h-4 w-4" />
                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <pre className="text-xs">
-                          Формат JSON: [
-                            {'"question": "...", "answer": "..."'},
-                            ...
-                          ]
-                        </pre>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="start"
+                        sideOffset={5}
+                        className="w-[var(--radix-dropdown-trigger-width)]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => handleSearch("duckduckgo")}
+                        >
+                          DuckDuckGo
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSearch("google")}>
+                          Google
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSearch("yandex")}>
+                          Яндекс
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      variant="default"
+                      onClick={handleAiQuery}
+                      className="gap-2 w-full md:w-auto"
+                    >
+                      <Brain className="h-4 w-4" />
+                      ИИ
+                    </Button>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".json"
+                      onChange={handleFileUpload}
+                      id="file-input"
+                    />
+                    <TooltipProvider>
+                      <Tooltip delayDuration={50}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="default"
+                            onClick={() => document.getElementById("file-input").click()}
+                            className="gap-2 w-full md:w-auto col-span-2 md:col-span-1"
+                          >
+                            <FileUp className="h-4 w-4" />
+                            Загрузить
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <pre className="text-xs">
+                            Формат JSON: [
+                              {'"question": "...", "answer": "..."'},
+                              ...
+                            ]
+                          </pre>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Results Section */}
           {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
             <div className="space-y-4">
               <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-                {/* Mobile View */}
                 <div className="grid grid-cols-1 divide-y md:hidden">
                   {filteredAnswers.map((item, index) => (
                     <div key={index} className="p-4 space-y-2">
@@ -380,18 +553,35 @@ const Main = () => {
                       </div>
                       <div
                         onClick={() => copyToClipboard(item.answer)}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors rounded p-2"
+                        className={cn(
+                          "cursor-pointer transition-colors rounded p-2",
+                          item.unverified 
+                            ? "bg-yellow-500/10 border border-yellow-500/20" 
+                            : "hover:bg-muted/50"
+                        )}
                       >
                         <div className="text-sm text-muted-foreground mb-1">
                           Ответ:
                         </div>
-                        <div className="text-sm">{item.answer}</div>
+                        <div className={cn(
+                          "text-sm",
+                          item.unverified && "text-muted-foreground"
+                        )}>
+                          {item.answer}
+                          {item.unverified && (
+                            <div className="flex items-center gap-2 mt-2 border-t border-yellow-500/20 pt-2">
+                              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15 text-xs">
+                                <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
+                                <span className="font-medium text-yellow-500">Непроверенный ответ</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Desktop View */}
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
@@ -411,9 +601,26 @@ const Main = () => {
                           </TableCell>
                           <TableCell
                             onClick={() => copyToClipboard(item.answer)}
-                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                            className={cn(
+                              "cursor-pointer transition-colors relative",
+                              item.unverified 
+                                ? "bg-yellow-500/10 border-y border-yellow-500/20" 
+                                : "hover:bg-muted/50"
+                            )}
                           >
-                            {item.answer}
+                            <div className="flex items-center gap-2">
+                              {item.unverified && (
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15">
+                                  <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
+                                  <span className="text-xs font-medium text-yellow-500">Непроверенный</span>
+                                </div>
+                              )}
+                              <span className={cn(
+                                item.unverified && "text-muted-foreground"
+                              )}>
+                                {item.answer}
+                              </span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -422,7 +629,6 @@ const Main = () => {
                 </div>
               </div>
 
-              {/* Add Load More button */}
               {(localAnswers.length > displayLimit || (!localAnswers.length && answers.length > displayLimit)) && (
                 <Button
                   variant="secondary"
@@ -449,6 +655,17 @@ const Main = () => {
           )}
         </div>
       </div>
+
+      {showScrollTop && (
+        <Button
+          variant="default"
+          size="icon"
+          className="fixed bottom-6 right-6 rounded-full shadow-md hover:shadow-lg z-50 bg-black hover:bg-black/90 text-white"
+          onClick={scrollToTop}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
 
       <AiChatPopup
         isOpen={isAiChatOpen}
