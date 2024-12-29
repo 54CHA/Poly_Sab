@@ -10,11 +10,22 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { cn } from "./lib/utils";
+import Loader from "./components/Loader";
 
 function App() {
   const [isHidden, setIsHidden] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleMouseClick = useCallback((e) => {
     if (e.ctrlKey && e.button === 0) {
@@ -30,6 +41,7 @@ function App() {
           className="min-h-screen flex flex-col relative"
           onMouseDown={handleMouseClick}
         >
+          {isLoading && <Loader />}
           <div
             className={cn(
               "absolute inset-0 z-50 transition-opacity duration-100",

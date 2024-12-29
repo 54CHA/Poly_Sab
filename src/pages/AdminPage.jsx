@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { FileUp, Trash2 } from "lucide-react";
+import { FileUp, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 
@@ -26,7 +26,7 @@ const AdminPage = () => {
     try {
       const { data, error } = await supabase
         .from("subjects")
-        .select("*")
+        .select("id, name, file_name, questions_count, uploaded_at")
         .order("name", { ascending: true });
 
       if (error) throw error;
@@ -108,6 +108,43 @@ const AdminPage = () => {
     }
   };
 
+  const handleExport = async (subject) => {
+    try {
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("*")
+        .eq("id", subject.id)
+        .single();
+
+      if (error) throw error;
+
+      // Create a sanitized filename from subject name
+      const sanitizedName = subject.name.replace(/[^a-zа-яё0-9]/gi, '_').toLowerCase();
+      const filename = `${sanitizedName}_export.json`;
+
+      const blob = new Blob([JSON.stringify(data.answers, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Экспорт успешен", {
+        description: `Файл ${filename} был скачан`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Ошибка", {
+        description: "Не удалось экспортировать данные",
+      });
+    }
+  };
+
   return (
     <main className="max-w-[1000px] mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -158,13 +195,22 @@ const AdminPage = () => {
                     {subject.file_name}
                   </div>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDelete(subject.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleExport(subject)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(subject.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{subject.questions_count} вопросов</span>
@@ -185,7 +231,7 @@ const AdminPage = () => {
                 <TableHead className="font-medium text-center">
                   Вопросов
                 </TableHead>
-                <TableHead className="font-medium">Дата загрузки</TableHead>
+                <TableHead className="font-medium text-center">Дата</TableHead>
                 <TableHead className="w-[100px] text-center">
                   Действия
                 </TableHead>
@@ -207,13 +253,22 @@ const AdminPage = () => {
                     {new Date(subject.uploaded_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDelete(subject.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleExport(subject)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleDelete(subject.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

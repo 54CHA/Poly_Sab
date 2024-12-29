@@ -21,6 +21,13 @@ import {
 } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import AiChatPopup from "./AiChatPopup";
+import SubjectsSidebar from "./SubjectsSidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "./ui/tooltip";
 
 const Main = () => {
   const [answers, setAnswers] = useState([]);
@@ -84,6 +91,7 @@ const Main = () => {
       setSelectedSubject(subjectId);
       setAnswers(data.answers);
       setDisplayLimit(30);
+      setLocalAnswers([]);
       localStorage.setItem("selectedSubjectId", subjectId.toString());
       localStorage.setItem("answers", JSON.stringify(data.answers));
 
@@ -110,13 +118,13 @@ const Main = () => {
       const text = await file.text();
       const parsedAnswers = JSON.parse(text);
 
-      console.log("Parsed Answers:", parsedAnswers);
-
       if (
         Array.isArray(parsedAnswers) &&
         parsedAnswers.every((item) => item.question && item.answer)
       ) {
         setLocalAnswers(parsedAnswers);
+        setSelectedSubject(null);
+        setAnswers([]);
         toast.success("Файл загружен", {
           description: "Ответы успешно загружены локально",
         });
@@ -128,21 +136,38 @@ const Main = () => {
       toast.error("Ошибка", {
         description: "Не удалось загрузить файл",
       });
+    } finally {
+      event.target.value = '';
     }
   };
 
+  const handleClearLocal = () => {
+    setLocalAnswers([]);
+    setDisplayLimit(30);
+    const fileInput = document.getElementById("file-input");
+    if (fileInput) fileInput.value = '';
+    
+    toast.success("Сброшено", {
+      description: "Локальный файл был сброшен",
+    });
+  };
+
   const filteredAnswers = useMemo(() => {
-    if (!searchQuery.trim()) return answers.slice(0, displayLimit);
+    const currentAnswers = localAnswers.length > 0 ? localAnswers : answers;
+
+    if (!searchQuery.trim()) {
+      return currentAnswers.slice(0, displayLimit);
+    }
 
     const query = searchQuery.toLowerCase();
-    return answers
+    return currentAnswers
       .filter(
         (item) =>
           item.question.toLowerCase().includes(query) ||
           item.answer.toLowerCase().includes(query)
       )
       .slice(0, displayLimit);
-  }, [answers, searchQuery, displayLimit]);
+  }, [answers, localAnswers, searchQuery, displayLimit]);
 
   const handleSearch = (engine) => {
     if (!searchQuery.trim()) {
@@ -221,126 +246,37 @@ const Main = () => {
   return (
     <main className="max-w-[1200px] mx-auto p-4 sm:p-6">
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Mobile Dropdown */}
-        <div className="md:hidden w-full">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full gap-2 justify-between"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <Database className="h-4 w-4 shrink-0" />
-                  <span className="truncate">
-                    {subjects.find((s) => s.id === selectedSubject)?.name ||
-                      "Выберите предмет"}
-                  </span>
-                </div>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="w-[var(--radix-dropdown-trigger-width)] max-h-[60vh] overflow-y-auto"
-            >
-              {selectedSubject && (
-                <>
-                  <DropdownMenuItem onClick={handleResetSubject}>
-                    Сбросить выбор
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-
-              {Object.entries(groupedSubjects).map(
-                ([letter, letterSubjects]) => (
-                  <div key={letter}>
-                    <DropdownMenuItem
-                      className="text-sm text-muted-foreground"
-                      disabled
-                    >
-                      {letter}
-                    </DropdownMenuItem>
-                    {letterSubjects.map((subject) => (
-                      <DropdownMenuItem
-                        key={subject.id}
-                        onClick={() => handleSubjectSelect(subject.id)}
-                        className="pl-6"
-                      >
-                        <div className="flex flex-col w-full py-1">
-                          <div className="truncate">{subject.name}</div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                  </div>
-                )
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-64 shrink-0 space-y-4 sticky top-4 h-[calc(100vh-8rem)]">
-          <div className="rounded-lg border bg-card p-4 h-full">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Предметы</h3>
-              {selectedSubject && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetSubject}
-                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                >
-                  Сбросить
-                </Button>
-              )}
-            </div>
-            <div
-              className="space-y-4 overflow-y-auto pr-2"
-              style={{ height: "calc(100% - 2rem)" }}
-            >
-              {Object.entries(groupedSubjects).map(
-                ([letter, letterSubjects]) => (
-                  <div key={letter} className="space-y-1">
-                    <div className="text-sm font-medium text-muted-foreground px-3 sticky top-0 bg-card z-10">
-                      {letter}
-                    </div>
-                    {letterSubjects.map((subject) => (
-                      <button
-                        key={subject.id}
-                        onClick={() => handleSubjectSelect(subject.id)}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                          "hover:bg-muted/50",
-                          selectedSubject === subject.id &&
-                            "bg-muted font-medium"
-                        )}
-                      >
-                        <div className="truncate">{subject.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {subject.questions_count} вопросов
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-        </div>
+        <SubjectsSidebar
+          subjects={subjects}
+          selectedSubject={selectedSubject}
+          onSubjectSelect={handleSubjectSelect}
+          onReset={handleResetSubject}
+          groupedSubjects={groupedSubjects}
+        />
 
         {/* Main Content */}
         <div className="flex-1 space-y-6">
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 sm:p-6">
             <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold tracking-tight">
-                  Поиск ответов
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Выберите предмет из базы данных или загрузите новый JSON файл
-                </p>
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-semibold tracking-tight">
+                    Поиск ответов
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Выберите предмет из базы данных или загрузите новый JSON файл
+                  </p>
+                </div>
+                {localAnswers.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearLocal}
+                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                  >
+                    Сбросить файл
+                  </Button>
+                )}
               </div>
 
               <div className="flex flex-col md:flex-row gap-2">
@@ -398,16 +334,28 @@ const Main = () => {
                     onChange={handleFileUpload}
                     id="file-input"
                   />
-                  <Button
-                    variant="default"
-                    onClick={() =>
-                      document.getElementById("file-input").click()
-                    }
-                    className="gap-2 w-full md:w-auto col-span-2 md:col-span-1"
-                  >
-                    <FileUp className="h-4 w-4" />
-                    Загрузить
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={50}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="default"
+                          onClick={() => document.getElementById("file-input").click()}
+                          className="gap-2 w-full md:w-auto col-span-2 md:col-span-1"
+                        >
+                          <FileUp className="h-4 w-4" />
+                          Загрузить
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <pre className="text-xs">
+                          Формат JSON: [
+                            {'"question": "...", "answer": "..."'},
+                            ...
+                          ]
+                        </pre>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </div>
@@ -419,10 +367,7 @@ const Main = () => {
               <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                 {/* Mobile View */}
                 <div className="grid grid-cols-1 divide-y md:hidden">
-                  {(localAnswers.length > 0
-                    ? localAnswers
-                    : filteredAnswers
-                  ).map((item, index) => (
+                  {filteredAnswers.map((item, index) => (
                     <div key={index} className="p-4 space-y-2">
                       <div
                         onClick={() => copyToClipboard(item.question)}
@@ -456,10 +401,7 @@ const Main = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(localAnswers.length > 0
-                        ? localAnswers
-                        : filteredAnswers
-                      ).map((item, index) => (
+                      {filteredAnswers.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell
                             onClick={() => copyToClipboard(item.question)}
