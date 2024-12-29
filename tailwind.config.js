@@ -85,7 +85,13 @@ export default {
       backgroundColor: {
         Canvas: "Canvas",
       },
+      scrollbar: {
+        thin: 'thin',
+      },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    require('tailwind-scrollbar')({ nocompatible: true }),
+  ],
 };

@@ -423,7 +423,7 @@ const Main = () => {
               </div>
 
               {/* Add Load More button */}
-              {!localAnswers.length && answers.length > displayLimit && (
+              {(localAnswers.length > displayLimit || (!localAnswers.length && answers.length > displayLimit)) && (
                 <Button
                   variant="secondary"
                   onClick={handleLoadMore}
