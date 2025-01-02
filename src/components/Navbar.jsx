@@ -1,5 +1,7 @@
-import { BookOpen, Github, Settings, LogOut } from "lucide-react";
-import { Button } from "./ui/button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBook } from "@fortawesome/free-solid-svg-icons";
+import { faGear, faRightFromBracket, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
+import { Button } from "./ui/button";   
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -12,7 +14,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-secondary p-2 rounded-lg">
-              <BookOpen className="h-6 w-6 text-secondary-foreground" />
+              <FontAwesomeIcon icon={faBook} className="h-6 w-6 text-secondary-foreground" />
             </div>
             <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/50 text-transparent bg-clip-text">
               Poly Saboteur
@@ -23,27 +25,27 @@ const Navbar = () => {
               <>
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/admin">
-                    <Settings className="h-5 w-5" />
+                    <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                   </Link>
                 </Button>
                 <Button variant="ghost" size="icon" onClick={logout}>
-                  <LogOut className="h-5 w-5" />
+                  <FontAwesomeIcon icon={faRightFromBracket} className="h-5 w-5" />
                 </Button>
               </>
             ) : (
               <Button variant="ghost" size="icon" asChild>
                 <Link to="/admin">
-                  <Settings className="h-5 w-5" />
+                  <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                 </Link>
               </Button>
             )}
             <Button variant="ghost" size="icon" asChild>
               <a
-                href="https://github.com/54CHA/Poly_Saboteur"
+                href="https://t.me/+AFSRrzzUzYtkM2Yy"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Github className="h-5 w-5" />
+                <FontAwesomeIcon icon={faPaperPlane} className="h-5 w-5" />
               </a>
             </Button>
           </div>

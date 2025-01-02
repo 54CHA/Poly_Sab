@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Search, FileUp, Brain, Database, ChevronDown, PlusCircle, AlertCircle, X, ArrowUp } from "lucide-react";
+import { Search, FileUp, Brain, Database, ChevronDown, PlusCircle, AlertCircle, X, ArrowUp, Calculator as CalculatorIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import {
@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "./ui/tooltip";
+import Calculator from "./Calculator";
 
 const Main = () => {
   const [answers, setAnswers] = useState([]);
@@ -42,6 +43,8 @@ const Main = () => {
   const [newAnswer, setNewAnswer] = useState("");
   const [localSubjectAnswers, setLocalSubjectAnswers] = useState({});
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -453,8 +456,8 @@ const Main = () => {
                   Добавить свой ответ
                 </Button>
 
-                <div className="flex flex-col md:flex-row gap-2">
-                  <div className="flex flex-col md:flex-row gap-2 w-full md:w-[60%]">
+                <div className="flex flex-col lg:flex-row gap-2">
+                  <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-[60%]">
                     <Input
                       type="text"
                       placeholder="Поиск..."
@@ -463,12 +466,19 @@ const Main = () => {
                       className="w-full"
                     />
                   </div>
-                  <div className="grid grid-cols-2 md:flex gap-2 w-full md:w-auto">
+                  <div className="grid grid-cols-2 md:flex gap-2">
+                    <input
+                      type="file"
+                      id="file-input"
+                      className="hidden"
+                      accept=".json"
+                      onChange={handleFileUpload}
+                    />
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="default"
-                          className="gap-2 w-full md:w-auto"
+                          className="gap-2 w-full lg:w-auto"
                         >
                           <Search className="h-4 w-4" />
                           Поиск
@@ -496,25 +506,26 @@ const Main = () => {
                     <Button
                       variant="default"
                       onClick={handleAiQuery}
-                      className="gap-2 w-full md:w-auto"
+                      className="gap-2 w-full lg:w-auto"
                     >
                       <Brain className="h-4 w-4" />
                       ИИ
                     </Button>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".json"
-                      onChange={handleFileUpload}
-                      id="file-input"
-                    />
+                    <Button
+                      variant="default"
+                      onClick={() => setIsCalculatorOpen(true)}
+                      className="gap-2 w-full lg:w-auto"
+                    >
+                      <CalculatorIcon className="h-4 w-4" />
+                      <p className="block lg:hidden">Кальк.</p>
+                    </Button>
                     <TooltipProvider>
                       <Tooltip delayDuration={50}>
                         <TooltipTrigger asChild>
                           <Button
                             variant="default"
                             onClick={() => document.getElementById("file-input").click()}
-                            className="gap-2 w-full md:w-auto col-span-2 md:col-span-1"
+                            className="gap-2 w-full lg:w-auto"
                           >
                             <FileUp className="h-4 w-4" />
                             Загрузить
@@ -573,7 +584,7 @@ const Main = () => {
                               <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15 text-xs">
                                 <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
                                 <span className="font-medium text-yellow-500">Непроверенный ответ</span>
-                              </div>
+                              </div>2
                             </div>
                           )}
                         </div>
@@ -671,6 +682,12 @@ const Main = () => {
         isOpen={isAiChatOpen}
         onClose={() => setIsAiChatOpen(false)}
         initialQuery={searchQuery}
+      />
+
+      <Calculator 
+        isOpen={isCalculatorOpen} 
+        onClose={() => setIsCalculatorOpen(false)} 
+        isHidden={isHidden}
       />
     </main>
   );

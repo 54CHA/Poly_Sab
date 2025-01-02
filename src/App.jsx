@@ -14,6 +14,7 @@ import { useState, useCallback, useEffect } from "react";
 import { cn } from "./lib/utils";
 import Loader from "./components/Loader";
 import UnverifiedAnswersPage from "./pages/UnverifiedAnswersPage";
+import CustomToaster from "./components/CustomToaster";
 
 function App() {
   const [isHidden, setIsHidden] = useState(false);
@@ -27,9 +28,8 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleMouseClick = useCallback((e) => {
-    if (e.ctrlKey && e.button === 0) {
-      e.preventDefault();
+  const handleKeyDown = useCallback((e) => {
+    if (e.ctrlKey && e.altKey) {
       setIsHidden((h) => !h);
     }
   }, []);
@@ -39,13 +39,15 @@ function App() {
       <Router>
         <div
           className="min-h-screen flex flex-col relative"
-          onMouseDown={handleMouseClick}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
         >
           {isLoading && <Loader />}
           <div
             className={cn(
-              "absolute inset-0 z-50 transition-opacity duration-100",
+              "fixed inset-0 transition-opacity duration-100",
               "bg-[Canvas]",
+              "z-[9999]",
               isHidden ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
           />
@@ -73,8 +75,13 @@ function App() {
             </Routes>
           </div>
           <Footer />
+          <CustomToaster 
+            position="top-center" 
+            richColors 
+            duration={3000} 
+            isHidden={isHidden}
+          />
         </div>
-        <Toaster position="top-center" richColors duration={3000} />
       </Router>
     </AuthProvider>
   );
