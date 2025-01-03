@@ -1,5 +1,5 @@
+import { BookOpen } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook } from "@fortawesome/free-solid-svg-icons";
 import { faGear, faRightFromBracket, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "./ui/button";   
 import { Link } from "react-router-dom";
@@ -14,7 +14,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-secondary p-2 rounded-lg">
-              <FontAwesomeIcon icon={faBook} className="h-6 w-6 text-secondary-foreground" />
+              <BookOpen className="h-6 w-6 text-secondary-foreground" />
             </div>
             <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/50 text-transparent bg-clip-text">
               Poly Saboteur
