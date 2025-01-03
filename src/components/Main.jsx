@@ -528,7 +528,7 @@ const Main = () => {
                             className="gap-2 w-full lg:w-auto"
                           >
                             <FileUp className="h-4 w-4" />
-                            Загрузить
+                            JSON
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>

@@ -41,7 +41,7 @@ const Navbar = () => {
             )}
             <Button variant="ghost" size="icon" asChild>
               <a
-                href="https://t.me/+AFSRrzzUzYtkM2Yy"
+                href="https://t.me/+2CBygI6Rdj0xNjJi"
                 target="_blank"
                 rel="noopener noreferrer"
               >
