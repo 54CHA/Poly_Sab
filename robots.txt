@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://spbpu.site/sitemap.xml
+
+# Block access to admin pages
+Disallow: /admin
+Disallow: /admin/* 
