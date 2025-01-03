@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { getGeminiResponse } from "@/lib/gemini";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from 'react-markdown';
 
 const LoadingDots = () => (
   <div className="flex gap-1 items-center">
@@ -33,15 +34,19 @@ const Message = ({ message, onCopy }) => {
           className={cn(
             "rounded-xl px-3 py-2 text-sm shadow-sm",
             message.role === "user"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted"
+              ? "bg-primary text-primary-foreground prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground"
+              : "bg-muted prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground"
           )}
         >
           {message.content === null ? (
             <LoadingDots />
           ) : (
             <>
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              <div className="whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none prose-p:leading-normal prose-pre:p-2 prose-pre:rounded-md prose-pre:bg-muted/50">
+                <ReactMarkdown>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
               {message.role === "assistant" && message.content && (
                 <div className="mt-2 flex items-center border-t border-border/40 pt-2">
                   <Button
