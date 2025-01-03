@@ -1,5 +1,6 @@
 import animate from "tailwindcss-animate";
 import scrollbar from "tailwind-scrollbar";
+import typography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -86,6 +87,6 @@ export default {
   plugins: [
     animate,
     scrollbar({ nocompatible: true }),
-    require('@tailwindcss/typography'),
+    typography,
   ],
 };
