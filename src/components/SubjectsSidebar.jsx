@@ -10,6 +10,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 export default function SubjectsSidebar({
   subjects,
@@ -28,7 +34,7 @@ export default function SubjectsSidebar({
     const filtered = {};
 
     Object.entries(groupedSubjects).forEach(([letter, letterSubjects]) => {
-      const filteredSubjects = letterSubjects.filter(subject =>
+      const filteredSubjects = letterSubjects.filter((subject) =>
         subject.name.toLowerCase().includes(query)
       );
       if (filteredSubjects.length > 0) {
@@ -128,32 +134,43 @@ export default function SubjectsSidebar({
             className="space-y-4 overflow-y-auto pr-2 mt-3"
             style={{ height: "calc(100% - 5rem)" }}
           >
-            {Object.entries(filteredGroupedSubjects).map(([letter, letterSubjects]) => (
-              <div key={letter} className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground px-3 sticky top-0 bg-card z-10">
-                  {letter}
+            {Object.entries(filteredGroupedSubjects).map(
+              ([letter, letterSubjects]) => (
+                <div key={letter} className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground px-3 sticky top-0 bg-card z-10">
+                    {letter}
+                  </div>
+                  {letterSubjects.map((subject) => (
+                    <TooltipProvider key={subject.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => onSubjectSelect(subject.id)}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                              "hover:bg-muted/50",
+                              selectedSubject === subject.id &&
+                                "bg-muted font-medium"
+                            )}
+                          >
+                            <div className="truncate">{subject.name}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {subject.questions_count} вопросов
+                            </div>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="start">
+                          {subject.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
                 </div>
-                {letterSubjects.map((subject) => (
-                  <button
-                    key={subject.id}
-                    onClick={() => onSubjectSelect(subject.id)}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
-                      "hover:bg-muted/50",
-                      selectedSubject === subject.id && "bg-muted font-medium"
-                    )}
-                  >
-                    <div className="truncate">{subject.name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {subject.questions_count} вопросов
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       </div>
     </>
   );
-} 
+}

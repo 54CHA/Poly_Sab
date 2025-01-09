@@ -28,7 +28,7 @@ const Navbar = () => {
               <Button variant="ghost" size="icon" onClick={logout}>
                 <FontAwesomeIcon
                   icon={faRightFromBracket}
-                  className="h-5 w-5"
+                  className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors"
                 />
               </Button>
             )}
@@ -37,7 +37,7 @@ const Navbar = () => {
                 href="https://t.me/+2CBygI6Rdj0xNjJi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors duration-300 "
+                className="text-muted-foreground hover:text-foreground transition-colors duration-300"
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="h-5 w-5" />
               </a>
