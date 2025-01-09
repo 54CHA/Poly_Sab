@@ -37,6 +37,7 @@ const Navbar = () => {
                 href="https://t.me/+2CBygI6Rdj0xNjJi"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors duration-300 "
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="h-5 w-5" />
               </a>

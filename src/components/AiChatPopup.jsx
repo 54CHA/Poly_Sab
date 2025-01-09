@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { getGeminiResponse } from "@/lib/gemini";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 
 const LoadingDots = () => (
   <div className="flex gap-1 items-center">
@@ -32,7 +32,7 @@ const Message = ({ message, onCopy }) => {
         )}
         <div
           className={cn(
-            "rounded-xl px-3 py-2 text-sm shadow-sm",
+            "rounded-xl px-3 py-2 text-sm shadow-sm overflow-hidden",
             message.role === "user"
               ? "bg-primary text-primary-foreground prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground"
               : "bg-muted prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground"
@@ -42,8 +42,51 @@ const Message = ({ message, onCopy }) => {
             <LoadingDots />
           ) : (
             <>
-              <div className="whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none prose-p:leading-normal prose-pre:p-2 prose-pre:rounded-md prose-pre:bg-muted/50">
-                <ReactMarkdown>
+              <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+                <ReactMarkdown
+                  components={{
+                    pre({ node, ...props }) {
+                      return (
+                        <pre
+                          {...props}
+                          className="overflow-x-auto p-3 rounded-lg bg-muted/50 text-foreground max-w-full"
+                        />
+                      );
+                    },
+                    p({ node, ...props }) {
+                      return (
+                        <p
+                          {...props}
+                          className="my-2 leading-relaxed break-words"
+                        />
+                      );
+                    },
+                    code({ node, inline, ...props }) {
+                      return inline ? (
+                        <code
+                          {...props}
+                          className="px-1.5 py-0.5 rounded-md bg-muted/50 text-foreground font-mono text-sm"
+                        />
+                      ) : (
+                        <code
+                          {...props}
+                          className="block p-3 rounded-lg bg-muted/50 text-foreground font-mono text-sm whitespace-pre-wrap break-words"
+                        />
+                      );
+                    },
+                    ul({ node, ...props }) {
+                      return <ul {...props} className="my-2 ml-4 list-disc" />;
+                    },
+                    ol({ node, ...props }) {
+                      return (
+                        <ol {...props} className="my-2 ml-4 list-decimal" />
+                      );
+                    },
+                    li({ node, ...props }) {
+                      return <li {...props} className="my-1" />;
+                    },
+                  }}
+                >
                   {message.content}
                 </ReactMarkdown>
               </div>
@@ -72,12 +115,17 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Привет! Я помогу вам найти ответы на ваши вопросы. Что вас интересует?",
+      content:
+        "Привет! Я помогу вам найти ответы на ваши вопросы. Что вас интересует?",
     },
-    ...[initialQuery ? { 
-      role: "user", 
-      content: initialQuery,
-    } : null].filter(Boolean),
+    ...[
+      initialQuery
+        ? {
+            role: "user",
+            content: initialQuery,
+          }
+        : null,
+    ].filter(Boolean),
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -110,25 +158,28 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage = { 
-      role: "user", 
+    const userMessage = {
+      role: "user",
       content: input.trim(),
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-    setMessages((prev) => [...prev, { 
-      role: "assistant", 
-      content: null,
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: null,
+      },
+    ]);
 
     try {
       const response = await getGeminiResponse(input.trim());
       setMessages((prev) => [
         ...prev.slice(0, -1),
-        { 
-          role: "assistant", 
+        {
+          role: "assistant",
           content: response,
         },
       ]);
@@ -175,13 +226,15 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
               </div>
               <div>
                 <h3 className="font-semibold">AI Ассистент</h3>
-                <p className="text-xs text-muted-foreground">Gemini Flash 2.0 Experimental</p>
+                <p className="text-xs text-muted-foreground">
+                  Gemini Flash 2.0 Experimental
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={toggleFullscreen}
                 className="hover:bg-primary/10 hover:text-primary"
               >
@@ -191,9 +244,9 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                   <Maximize2 className="h-4 w-4" />
                 )}
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
                 className="hover:bg-destructive/10 hover:text-destructive"
               >
@@ -204,11 +257,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
             {messages.map((message, i) => (
-              <Message 
-                key={i} 
-                message={message} 
-                onCopy={handleCopy}
-              />
+              <Message key={i} message={message} onCopy={handleCopy} />
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -219,12 +268,14 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isLoading ? "AI думает..." : "Напишите сообщение..."}
+                placeholder={
+                  isLoading ? "AI думает..." : "Напишите сообщение..."
+                }
                 disabled={isLoading}
                 className="bg-background"
               />
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isLoading}
                 className="shadow-none"
               >
