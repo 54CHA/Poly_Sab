@@ -443,13 +443,12 @@ const Main = () => {
               <div className="flex flex-col gap-4 sm:gap-6">
                 <div className="flex justify-between items-center">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-semibold tracking-tight">
-                      Поиск ответов
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                      Поиск ответов на тесты СПбПУ
+                    </h1>
+                    <h2 className="text-xl font-medium">
+                      База данных OpenEdu и СДО
                     </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Выберите предмет из базы данных или загрузите новый JSON
-                      файл
-                    </p>
                   </div>
                 </div>
 
