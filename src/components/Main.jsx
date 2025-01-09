@@ -9,7 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Search, FileUp, Brain, Database, ChevronDown, PlusCircle, AlertCircle, X, ArrowUp, Calculator as CalculatorIcon } from "lucide-react";
+import {
+  Search,
+  FileUp,
+  Brain,
+  Database,
+  ChevronDown,
+  PlusCircle,
+  AlertCircle,
+  X,
+  ArrowUp,
+  Calculator as CalculatorIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import {
@@ -45,6 +56,7 @@ const Main = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [subjectData, setSubjectData] = useState(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -77,7 +89,10 @@ const Main = () => {
 
   useEffect(() => {
     if (Object.keys(localSubjectAnswers).length > 0) {
-      localStorage.setItem("localSubjectAnswers", JSON.stringify(localSubjectAnswers));
+      localStorage.setItem(
+        "localSubjectAnswers",
+        JSON.stringify(localSubjectAnswers)
+      );
     }
   }, [localSubjectAnswers]);
 
@@ -86,12 +101,12 @@ const Main = () => {
       setShowScrollTop(window.scrollY > 500);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const fetchSubjects = async () => {
@@ -114,21 +129,20 @@ const Main = () => {
     const loadingToast = toast.loading("Загрузка ответов...");
 
     try {
-      const id = String(subjectId);
-
       const { data, error } = await supabase
         .from("subjects")
-        .select("answers")
-        .eq("id", id)
+        .select("answers, materials, name")
+        .eq("id", subjectId)
         .single();
 
       if (error) throw error;
 
-      setSelectedSubject(id);
+      setSelectedSubject(subjectId);
       setAnswers(data.answers);
+      setSubjectData(data);
       setDisplayLimit(30);
-      setLocalAnswers([]);
-      localStorage.setItem("selectedSubjectId", id);
+
+      localStorage.setItem("selectedSubjectId", subjectId.toString());
       localStorage.setItem("answers", JSON.stringify(data.answers));
 
       toast.dismiss(loadingToast);
@@ -158,18 +172,18 @@ const Main = () => {
         Array.isArray(parsedAnswers) &&
         parsedAnswers.every((item) => item.question && item.answer)
       ) {
-        const processedAnswers = parsedAnswers.map(answer => ({
+        const processedAnswers = parsedAnswers.map((answer) => ({
           question: answer.question,
           answer: answer.answer,
           unverified: false,
-          addedAt: new Date().toISOString()
+          addedAt: new Date().toISOString(),
         }));
 
         setLocalAnswers(processedAnswers);
         setSelectedSubject(null);
         setAnswers([]);
         setDisplayLimit(30);
-        
+
         localStorage.removeItem("selectedSubjectId");
         localStorage.removeItem("answers");
 
@@ -185,7 +199,7 @@ const Main = () => {
         description: "Не удалось загрузить файл. Проверьте формат JSON",
       });
     } finally {
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -325,9 +339,9 @@ const Main = () => {
 
       const { data: updateData, error: updateError } = await supabase
         .from("subjects")
-        .update({ 
+        .update({
           answers: updatedAnswers,
-          questions_count: updatedAnswers.length
+          questions_count: updatedAnswers.length,
         })
         .eq("id", id)
         .select();
@@ -345,17 +359,18 @@ const Main = () => {
       setNewQuestion("");
       setNewAnswer("");
       setIsAddingAnswer(false);
-      
+
       toast.dismiss(loadingToast);
       toast.success("Ответ добавлен", {
         description: "Ваш ответ успешно добавлен в базу данных",
       });
-
     } catch (error) {
       console.error("Full error details:", error);
       toast.dismiss(loadingToast);
       toast.error("Ошибка", {
-        description: `Не удалось добавить ответ: ${error.message || "Неизвестная ошибка"}`,
+        description: `Не удалось добавить ответ: ${
+          error.message || "Неизвестная ошибка"
+        }`,
       });
     }
   };
@@ -385,11 +400,7 @@ const Main = () => {
                   <h2 className="text-2xl font-semibold tracking-tight">
                     Добавить ответ
                   </h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCancelAdd}
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleCancelAdd}>
                     <X className="h-4 w-4 mr-2" />
                     Отмена
                   </Button>
@@ -406,7 +417,7 @@ const Main = () => {
                       placeholder="Введите вопрос"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-medium mb-1 block">
                       Ответ
@@ -420,15 +431,10 @@ const Main = () => {
 
                   <div className="flex items-center text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                     <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <p>
-                      Ваш ответ будет помечен как непроверенный.
-                    </p>
+                    <p>Ваш ответ будет помечен как непроверенный.</p>
                   </div>
 
-                  <Button 
-                    className="w-full"
-                    onClick={handleAddAnswer}
-                  >
+                  <Button className="w-full" onClick={handleAddAnswer}>
                     Добавить ответ
                   </Button>
                 </div>
@@ -441,7 +447,8 @@ const Main = () => {
                       Поиск ответов
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Выберите предмет из базы данных или загрузите новый JSON файл
+                      Выберите предмет из базы данных или загрузите новый JSON
+                      файл
                     </p>
                   </div>
                 </div>
@@ -495,10 +502,14 @@ const Main = () => {
                         >
                           DuckDuckGo
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSearch("google")}>
+                        <DropdownMenuItem
+                          onClick={() => handleSearch("google")}
+                        >
                           Google
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSearch("yandex")}>
+                        <DropdownMenuItem
+                          onClick={() => handleSearch("yandex")}
+                        >
                           Яндекс
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -524,7 +535,9 @@ const Main = () => {
                         <TooltipTrigger asChild>
                           <Button
                             variant="default"
-                            onClick={() => document.getElementById("file-input").click()}
+                            onClick={() =>
+                              document.getElementById("file-input").click()
+                            }
                             className="gap-2 w-full lg:w-auto"
                           >
                             <FileUp className="h-4 w-4" />
@@ -533,10 +546,8 @@ const Main = () => {
                         </TooltipTrigger>
                         <TooltipContent>
                           <pre className="text-xs">
-                            Формат JSON: [
-                              {'"question": "...", "answer": "..."'},
-                              ...
-                            ]
+                            Формат JSON: [{'"question": "...", "answer": "..."'}
+                            , ... ]
                           </pre>
                         </TooltipContent>
                       </Tooltip>
@@ -546,6 +557,29 @@ const Main = () => {
               </div>
             )}
           </div>
+
+          {selectedSubject && subjectData?.materials?.length > 0 && (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+              <div className="flex flex-col gap-2">
+                <div className="text-sm text-muted-foreground">
+                  Материалы по предмету:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {subjectData.materials.map((material, index) => (
+                    <a
+                      key={index}
+                      href={material.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      {material.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
             <div className="space-y-4">
@@ -566,25 +600,30 @@ const Main = () => {
                         onClick={() => copyToClipboard(item.answer)}
                         className={cn(
                           "cursor-pointer transition-colors rounded p-2",
-                          item.unverified 
-                            ? "bg-yellow-500/10 border border-yellow-500/20" 
+                          item.unverified
+                            ? "bg-yellow-500/10 border border-yellow-500/20"
                             : "hover:bg-muted/50"
                         )}
                       >
                         <div className="text-sm text-muted-foreground mb-1">
                           Ответ:
                         </div>
-                        <div className={cn(
-                          "text-sm",
-                          item.unverified && "text-muted-foreground"
-                        )}>
+                        <div
+                          className={cn(
+                            "text-sm",
+                            item.unverified && "text-muted-foreground"
+                          )}
+                        >
                           {item.answer}
                           {item.unverified && (
                             <div className="flex items-center gap-2 mt-2 border-t border-yellow-500/20 pt-2">
                               <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15 text-xs">
                                 <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
-                                <span className="font-medium text-yellow-500">Непроверенный ответ</span>
-                              </div>2
+                                <span className="font-medium text-yellow-500">
+                                  Непроверенный ответ
+                                </span>
+                              </div>
+                              2
                             </div>
                           )}
                         </div>
@@ -614,8 +653,8 @@ const Main = () => {
                             onClick={() => copyToClipboard(item.answer)}
                             className={cn(
                               "cursor-pointer transition-colors relative",
-                              item.unverified 
-                                ? "bg-yellow-500/10 border-y border-yellow-500/20" 
+                              item.unverified
+                                ? "bg-yellow-500/10 border-y border-yellow-500/20"
                                 : "hover:bg-muted/50"
                             )}
                           >
@@ -623,12 +662,16 @@ const Main = () => {
                               {item.unverified && (
                                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-yellow-500/15">
                                   <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
-                                  <span className="text-xs font-medium text-yellow-500">Непроверенный</span>
+                                  <span className="text-xs font-medium text-yellow-500">
+                                    Непроверенный
+                                  </span>
                                 </div>
                               )}
-                              <span className={cn(
-                                item.unverified && "text-muted-foreground"
-                              )}>
+                              <span
+                                className={cn(
+                                  item.unverified && "text-muted-foreground"
+                                )}
+                              >
                                 {item.answer}
                               </span>
                             </div>
@@ -640,7 +683,8 @@ const Main = () => {
                 </div>
               </div>
 
-              {(localAnswers.length > displayLimit || (!localAnswers.length && answers.length > displayLimit)) && (
+              {(localAnswers.length > displayLimit ||
+                (!localAnswers.length && answers.length > displayLimit)) && (
                 <Button
                   variant="secondary"
                   onClick={handleLoadMore}
@@ -684,9 +728,9 @@ const Main = () => {
         initialQuery={searchQuery}
       />
 
-      <Calculator 
-        isOpen={isCalculatorOpen} 
-        onClose={() => setIsCalculatorOpen(false)} 
+      <Calculator
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
         isHidden={isHidden}
       />
     </main>

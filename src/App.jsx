@@ -51,6 +51,7 @@ function App() {
               isHidden ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
           />
+          <div className="fixed inset-0 -z-10 bg-background/80 backdrop-blur-xl" />
           <Navbar />
           <div className="flex-1">
             <Routes>
@@ -75,10 +76,10 @@ function App() {
             </Routes>
           </div>
           <Footer />
-          <CustomToaster 
-            position="top-center" 
-            richColors 
-            duration={3000} 
+          <CustomToaster
+            position="top-center"
+            richColors
+            duration={3000}
             isHidden={isHidden}
           />
         </div>

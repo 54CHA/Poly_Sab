@@ -1,7 +1,10 @@
 import { BookOpen } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGear, faRightFromBracket, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
-import { Button } from "./ui/button";   
+import {
+  faRightFromBracket,
+  faPaperPlane,
+} from "@fortawesome/free-solid-svg-icons";
+import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -21,22 +24,12 @@ const Navbar = () => {
             </h1>
           </Link>
           <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/admin">
-                    <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={logout}>
-                  <FontAwesomeIcon icon={faRightFromBracket} className="h-5 w-5" />
-                </Button>
-              </>
-            ) : (
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/admin">
-                  <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
-                </Link>
+            {isAuthenticated && (
+              <Button variant="ghost" size="icon" onClick={logout}>
+                <FontAwesomeIcon
+                  icon={faRightFromBracket}
+                  className="h-5 w-5"
+                />
               </Button>
             )}
             <Button variant="ghost" size="icon" asChild>
