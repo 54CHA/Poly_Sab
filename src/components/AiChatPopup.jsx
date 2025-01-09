@@ -32,7 +32,7 @@ const Message = ({ message, onCopy }) => {
         )}
         <div
           className={cn(
-            "rounded-xl px-3 py-2 text-sm shadow-sm overflow-hidden",
+            "rounded-xl px-3 py-0.5 text-sm shadow-sm overflow-hidden",
             message.role === "user"
               ? "bg-primary text-primary-foreground prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground"
               : "bg-muted prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground"
