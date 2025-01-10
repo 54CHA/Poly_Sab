@@ -103,7 +103,7 @@ export default function SubjectsSidebar({
       </div>
 
       {/* Desktop Sidebar - With Search */}
-      <div className="hidden md:block w-64 shrink-0 space-y-4 sticky top-4 h-[calc(100vh-8rem)]">
+      <div className="hidden md:block w-64 shrink-0 space-y-4 sticky top-4 h-[calc(100vh-8rem)] z-30">
         <div className="rounded-lg border bg-card p-4 h-full">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
