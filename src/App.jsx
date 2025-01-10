@@ -15,6 +15,7 @@ import { cn } from "./lib/utils";
 import Loader from "./components/Loader";
 import UnverifiedAnswersPage from "./pages/UnverifiedAnswersPage";
 import CustomToaster from "./components/CustomToaster";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   const [isHidden, setIsHidden] = useState(false);
@@ -73,6 +74,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </div>
           <Footer />
