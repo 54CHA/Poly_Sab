@@ -29,6 +29,6 @@ PolySaboteur - это веб-приложение, разработанное д
 ## Технологии
 
 - **Frontend:** React, Vite, TailwindCSS
-- **Backend/DB:** Supabase
+- **Backend/DB:** Supabase/PG
 - **Деплой:** Vercel
 - **UI компоненты:** shadcn/ui
