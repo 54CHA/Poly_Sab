@@ -1,7 +1,7 @@
-# PolySaboteur
+# PolySab
 
 <div align="center">
-  <img src="/public/favicon.png" alt="PolySaboteur Logo" width="120" />
+  <img src="/public/favicon.png" alt="PolySab Logo" width="120" />
   <h3>Умный помощник для тестов политеха</h3>
 </div>
 
@@ -17,7 +17,7 @@
 
 ## О проекте
 
-PolySaboteur - это веб-приложение, разработанное для помощи студентам с тестами OpenEdu и СДО СПбПУ. 
+PolySab - это веб-приложение, разработанное для помощи студентам с тестами OpenEdu и СДО СПбПУ. 
 
 ### Основные возможности
 
