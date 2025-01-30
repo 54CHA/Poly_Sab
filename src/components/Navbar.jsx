@@ -20,7 +20,7 @@ const Navbar = () => {
               <BookOpen className="h-6 w-6 text-secondary-foreground" />
             </div>
             <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/50 text-transparent bg-clip-text">
-              Poly Saboteur
+              Poly Sab
             </h1>
           </Link>
           <div className="flex items-center gap-2">

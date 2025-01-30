@@ -1,12 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Send, Brain, Maximize2, Minimize2, Bot, Copy } from "lucide-react";
+import { X, Send, Brain, Maximize2, Minimize2, Bot, Copy, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getGeminiResponse } from "@/lib/gemini";
+import { getGeminiResponse } from "@/lib/aimodels";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const LoadingDots = () => (
   <div className="flex gap-1 items-center">
@@ -32,7 +38,7 @@ const Message = ({ message, onCopy }) => {
         )}
         <div
           className={cn(
-            "rounded-xl px-3 py-0.5 text-sm shadow-sm overflow-hidden",
+            "rounded-xl px-3 py-1 text-sm shadow-sm overflow-hidden min-h-[30px] flex items-center",
             message.role === "user"
               ? "bg-primary text-primary-foreground prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground"
               : "bg-muted prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground"
@@ -41,7 +47,7 @@ const Message = ({ message, onCopy }) => {
           {message.content === null ? (
             <LoadingDots />
           ) : (
-            <>
+            <div className="w-full">
               <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                 <ReactMarkdown
                   components={{
@@ -103,7 +109,7 @@ const Message = ({ message, onCopy }) => {
                   </Button>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -129,6 +135,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("deepseek");
   const messagesEndRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const inputRef = useRef(null);
@@ -175,7 +182,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     ]);
 
     try {
-      const response = await getGeminiResponse(input.trim());
+      const response = await getGeminiResponse(input.trim(), selectedModel);
       setMessages((prev) => [
         ...prev.slice(0, -1),
         {
@@ -226,9 +233,32 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
               </div>
               <div>
                 <h3 className="font-semibold">AI Ассистент</h3>
-                <p className="text-xs text-muted-foreground">
-                  Gemini Flash 2.0 Experimental
-                </p>
+                <div className="flex items-center gap-2">
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="h-6 px-2 text-xs hover:bg-muted/50 flex items-center gap-1"
+                      >
+                        {selectedModel === "deepseek" && "DeepSeek"}
+                        {selectedModel === "mixtral" && "Mixtral"}
+                        {selectedModel === "llama" && "Llama"}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-[140px]" forceMount>
+                      <DropdownMenuItem onClick={() => setSelectedModel("deepseek")}>
+                        DeepSeek R1 70B
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedModel("mixtral")}>
+                        Mixtral 8x7B
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedModel("llama")}>
+                        Llama 3.1 8B
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-1.5">

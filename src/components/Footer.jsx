@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="max-w-[1000px] mx-auto p-4">
         <div className="flex flex-col items-center gap-2 md:flex-row md:justify-between">
           <p className="text-sm text-muted-foreground">
-            © 2024-{new Date().getFullYear()} Poly Saboteur
+            © 2024-{new Date().getFullYear()} Poly Sab
           </p>
           <Button variant="ghost" size="icon" asChild>
             <a
