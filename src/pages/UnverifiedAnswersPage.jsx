@@ -36,14 +36,12 @@ const UnverifiedAnswersPage = () => {
 
       if (error) throw error;
 
-      // Process only the new data
       const processedData = data.map(subject => ({
         ...subject,
         answers: subject.answers.filter(answer => answer.unverified),
         unverifiedCount: subject.answers.filter(answer => answer.unverified).length
       })).filter(subject => subject.unverifiedCount > 0);
 
-      // Append new data or replace if it's the first page
       setSubjects(prev => page === 0 ? processedData : [...prev, ...processedData]);
       setHasMore(data.length === ITEMS_PER_PAGE);
     } catch (error) {

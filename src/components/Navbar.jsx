@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, LayoutDashboard } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faRightFromBracket,
@@ -25,12 +25,19 @@ const Navbar = () => {
           </Link>
           <div className="flex items-center gap-2">
             {isAuthenticated && (
-              <Button variant="ghost" size="icon" onClick={logout}>
-                <FontAwesomeIcon
-                  icon={faRightFromBracket}
-                  className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors"
-                />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/admin">
+                    <LayoutDashboard className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={logout}>
+                  <FontAwesomeIcon
+                    icon={faRightFromBracket}
+                    className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors"
+                  />
+                </Button>
+              </>
             )}
             <Button variant="ghost" size="icon" asChild>
               <a

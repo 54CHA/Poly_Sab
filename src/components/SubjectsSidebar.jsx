@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Database, ChevronDown, Search } from "lucide-react";
+import { Database, ChevronDown, Search, Filter } from "lucide-react";
 import { Input } from "./ui/input";
 import { useState, useMemo } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from "./ui/dropdown-menu";
 import {
   Tooltip,
@@ -25,25 +26,109 @@ export default function SubjectsSidebar({
   groupedSubjects,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [filterByCategories, setFilterByCategories] = useState(false);
 
-  // Filter and group subjects based on search query (only used in desktop)
+  // Get unique categories from all subjects
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set();
+    subjects.forEach((subject) => {
+      subject.categories?.forEach((category) => {
+        uniqueCategories.add(category.name);
+      });
+    });
+    return Array.from(uniqueCategories).sort();
+  }, [subjects]);
+
+  // Filter and group subjects based on search query and selected categories
   const filteredGroupedSubjects = useMemo(() => {
-    if (!searchQuery.trim()) return groupedSubjects;
-
     const query = searchQuery.toLowerCase();
-    const filtered = {};
+    
+    // Filter subjects first
+    const filteredSubjects = subjects.filter((subject) => {
+      const matchesSearch = !query || subject.name.toLowerCase().includes(query);
+      const matchesCategories = !filterByCategories || selectedCategories.length === 0 || 
+        subject.categories?.some(cat => selectedCategories.includes(cat.name));
+      return matchesSearch && matchesCategories;
+    });
 
-    Object.entries(groupedSubjects).forEach(([letter, letterSubjects]) => {
-      const filteredSubjects = letterSubjects.filter((subject) =>
-        subject.name.toLowerCase().includes(query)
-      );
-      if (filteredSubjects.length > 0) {
-        filtered[letter] = filteredSubjects;
+    // If filtering by categories is enabled and categories are selected
+    if (filterByCategories) {
+      const categoryGroups = {};
+      
+      if (selectedCategories.length > 0) {
+        selectedCategories.forEach(categoryName => {
+          const subjectsInCategory = filteredSubjects.filter(subject =>
+            subject.categories?.some(cat => cat.name === categoryName)
+          );
+          if (subjectsInCategory.length > 0) {
+            categoryGroups[categoryName] = subjectsInCategory;
+          }
+        });
+      } else {
+        // Show all categories when none selected
+        filteredSubjects.forEach(subject => {
+          if (subject.categories && subject.categories.length > 0) {
+            subject.categories.forEach(category => {
+              if (!categoryGroups[category.name]) {
+                categoryGroups[category.name] = [];
+              }
+              categoryGroups[category.name].push(subject);
+            });
+          } else {
+            if (!categoryGroups["Без категории"]) {
+              categoryGroups["Без категории"] = [];
+            }
+            categoryGroups["Без категории"].push(subject);
+          }
+        });
+      }
+
+      // Sort the groups by category name
+      const sortedGroups = {};
+      Object.keys(categoryGroups)
+        .sort((a, b) => a === "Без категории" ? 1 : b === "Без категории" ? -1 : a.localeCompare(b))
+        .forEach(key => {
+          sortedGroups[key] = categoryGroups[key];
+        });
+
+      return sortedGroups;
+    }
+
+    // Group alphabetically
+    const groups = {};
+    const nonRussianGroups = {};
+    const russianPattern = /^[А-Яа-я]/;
+
+    filteredSubjects.forEach((subject) => {
+      const firstLetter = subject.name.charAt(0).toUpperCase();
+
+      if (russianPattern.test(firstLetter)) {
+        if (!groups[firstLetter]) {
+          groups[firstLetter] = [];
+        }
+        groups[firstLetter].push(subject);
+      } else {
+        if (!nonRussianGroups[firstLetter]) {
+          nonRussianGroups[firstLetter] = [];
+        }
+        nonRussianGroups[firstLetter].push(subject);
       }
     });
 
-    return filtered;
-  }, [groupedSubjects, searchQuery]);
+    return {
+      ...groups,
+      ...nonRussianGroups,
+    };
+  }, [subjects, searchQuery, selectedCategories, filterByCategories]);
+
+  const handleCategoryToggle = (category) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
 
   return (
     <>
@@ -75,8 +160,8 @@ export default function SubjectsSidebar({
               </>
             )}
 
-            {/* Use unfiltered groupedSubjects for mobile */}
-            {Object.entries(groupedSubjects).map(([letter, letterSubjects]) => (
+            {/* Subjects list */}
+            {Object.entries(filteredGroupedSubjects).map(([letter, letterSubjects]) => (
               <div key={letter}>
                 <DropdownMenuItem
                   className="text-sm text-muted-foreground"
@@ -119,28 +204,83 @@ export default function SubjectsSidebar({
                 </Button>
               )}
             </div>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Поиск предмета..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
-              />
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Поиск предмета..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={filterByCategories ? "default" : "outline"}
+                  size="sm"
+                  className="w-full justify-between"
+                  onClick={() => setFilterByCategories(!filterByCategories)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span>
+                      {filterByCategories ? "По категориям" : "По алфавиту"}
+                    </span>
+                  </div>
+                </Button>
+              </div>
+              {filterByCategories && categories.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {selectedCategories.length
+                            ? `Выбрано: ${selectedCategories.length}`
+                            : "Выберите категории"}
+                        </span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-[var(--radix-dropdown-trigger-width)]"
+                  >
+                    {categories.map((category) => (
+                      <DropdownMenuCheckboxItem
+                        key={category}
+                        checked={selectedCategories.includes(category)}
+                        onCheckedChange={() => handleCategoryToggle(category)}
+                      >
+                        {category}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
           <div
             className="space-y-4 overflow-y-auto pr-2 mt-3"
-            style={{ height: "calc(100% - 5rem)" }}
+            style={{ 
+              height: filterByCategories 
+                ? "calc(100% - 10rem)" 
+                : "calc(100% - 120px)" 
+            }}
           >
             {Object.entries(filteredGroupedSubjects).map(
-              ([letter, letterSubjects]) => (
-                <div key={letter} className="space-y-1">
+              ([group, groupSubjects]) => (
+                <div key={group} className="space-y-1">
                   <div className="text-sm font-medium text-muted-foreground px-3 sticky top-0 bg-card z-10">
-                    {letter}
+                    {group}
                   </div>
-                  {letterSubjects.map((subject) => (
+                  {groupSubjects.map((subject) => (
                     <TooltipProvider key={subject.id}>
                       <Tooltip>
                         <TooltipTrigger asChild>

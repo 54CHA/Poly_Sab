@@ -113,10 +113,28 @@ const Main = () => {
     try {
       const { data, error } = await supabase
         .from("subjects")
-        .select("id, name, questions_count, file_name");
+        .select(`
+          id, 
+          name, 
+          questions_count, 
+          file_name,
+          subject_categories (
+            category:categories(id, name)
+          )
+        `);
 
       if (error) throw error;
-      const sortedSubjects = data.sort((a, b) => a.name.localeCompare(b.name));
+
+      // Process the data to flatten the categories
+      const processedData = data.map(subject => ({
+        ...subject,
+        categories: subject.subject_categories
+          ?.map(sc => sc.category)
+          .filter(Boolean)
+          .sort((a, b) => a.name.localeCompare(b.name)) || []
+      }));
+
+      const sortedSubjects = processedData.sort((a, b) => a.name.localeCompare(b.name));
       setSubjects(sortedSubjects);
     } catch (err) {
       toast.error("Ошибка", {

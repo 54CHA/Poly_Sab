@@ -16,6 +16,7 @@ import Loader from "./components/Loader";
 import UnverifiedAnswersPage from "./pages/UnverifiedAnswersPage";
 import CustomToaster from "./components/CustomToaster";
 import NotFoundPage from "./pages/NotFoundPage";
+import CategoriesPage from "./pages/CategoriesPage";
 
 function App() {
   const [isHidden, setIsHidden] = useState(false);
@@ -63,6 +64,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <ProtectedRoute>
+                    <CategoriesPage />
                   </ProtectedRoute>
                 }
               />
