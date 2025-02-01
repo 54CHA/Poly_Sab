@@ -36,6 +36,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
+import JSZip from "jszip";
+import { Checkbox } from "../components/ui/checkbox";
 
 const AdminPage = () => {
   const [subjects, setSubjects] = useState([]);
@@ -53,6 +55,7 @@ const AdminPage = () => {
   const [editingSubjectId, setEditingSubjectId] = useState(null);
   const [subjectSearch, setSubjectSearch] = useState("");
   const [editingMaterial, setEditingMaterial] = useState(null);
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
 
   const filteredSubjects = useMemo(() => {
     if (!subjectSearch.trim()) return subjects;
@@ -394,6 +397,104 @@ const AdminPage = () => {
     await handleUpdateMaterials(subjectId, newMaterials);
   };
 
+  const handleSubjectSelection = (subjectId) => {
+    setSelectedSubjects((prev) =>
+      prev.includes(subjectId)
+        ? prev.filter((id) => id !== subjectId)
+        : [...prev, subjectId]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedSubjects.length) return;
+    
+    if (!confirm(`Вы уверены, что хотите удалить ${selectedSubjects.length} выбранных предметов?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("subjects")
+        .delete()
+        .in("id", selectedSubjects);
+
+      if (error) throw error;
+
+      toast.success("Успешно", {
+        description: "Выбранные предметы удалены",
+      });
+
+      setSelectedSubjects([]);
+      fetchSubjects();
+    } catch (error) {
+      toast.error("Ошибка", {
+        description: "Не удалось удалить предметы",
+      });
+    }
+  };
+
+  const handleBulkExport = async () => {
+    if (!selectedSubjects.length) return;
+
+    try {
+      // Show a loading toast
+      toast.loading("Экспортируем предметы...", { id: "export-toast" });
+
+      const BATCH_SIZE = 5; // Process 5 subjects at a time
+      const zip = new JSZip();
+      
+      // Process subjects in batches
+      for (let i = 0; i < selectedSubjects.length; i += BATCH_SIZE) {
+        const batchIds = selectedSubjects.slice(i, i + BATCH_SIZE);
+        
+        const { data, error } = await supabase
+          .from("subjects")
+          .select("*")
+          .in("id", batchIds);
+
+        if (error) throw error;
+
+        // Add each subject's data to the zip file
+        data.forEach((subject) => {
+          const sanitizedName = subject.name
+            .replace(/[^a-zа-яё0-9]/gi, "_")
+            .toLowerCase();
+          const filename = `${sanitizedName}_export.json`;
+          zip.file(filename, JSON.stringify(subject.answers, null, 2));
+        });
+
+        // Update progress toast
+        const progress = Math.min(((i + BATCH_SIZE) / selectedSubjects.length) * 100, 100);
+        toast.loading(`Экспортируем предметы... ${Math.round(progress)}%`, { id: "export-toast" });
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "subjects_export.zip";
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Экспорт успешен", {
+        id: "export-toast",
+        description: `${selectedSubjects.length} предметов экспортировано`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Ошибка", {
+        id: "export-toast",
+        description: "Не удалось экспортировать данные",
+      });
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectedSubjects(filteredSubjects.map(subject => subject.id));
+  };
+
   return (
     <main className="max-w-[1400px] mx-auto p-6 space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
@@ -560,23 +661,69 @@ const AdminPage = () => {
       </div>
 
       <div className="rounded-lg border bg-card">
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Поиск предметов..."
-              value={subjectSearch}
-              onChange={(e) => setSubjectSearch(e.target.value)}
-              className="max-w-sm"
-            />
-            {subjectSearch && (
+        <div className="p-4 border-b space-y-4 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Поиск предметов..."
+                value={subjectSearch}
+                onChange={(e) => setSubjectSearch(e.target.value)}
+                className="w-full sm:w-auto sm:min-w-[300px]"
+              />
+              {subjectSearch && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSubjectSearch("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={() => setSubjectSearch("")}
+                size="sm"
+                onClick={handleSelectAll}
+                className="gap-2"
               >
-                <X className="h-4 w-4" />
+                Выбрать все
               </Button>
-            )}
+              {selectedSubjects.length > 0 && (
+                <>
+                  <span className="text-sm text-muted-foreground">
+                    Выбрано: {selectedSubjects.length}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkExport}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Экспорт</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Удалить</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedSubjects([])}
+                    >
+                      Сбросить
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -594,11 +741,23 @@ const AdminPage = () => {
             </TableHeader>
             <TableBody>
               {filteredSubjects.map((subject) => (
-                <TableRow key={subject.id}>
+                <TableRow key={subject.id} className={selectedSubjects.includes(subject.id) ? "bg-muted/50" : ""}>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{subject.name}</div>
-                      <div className="text-sm text-muted-foreground">{subject.file_name}</div>
+                    <div className="flex items-center gap-4">
+                      <Checkbox
+                        checked={selectedSubjects.includes(subject.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedSubjects(prev => [...prev, subject.id]);
+                          } else {
+                            setSelectedSubjects(prev => prev.filter(id => id !== subject.id));
+                          }
+                        }}
+                      />
+                      <div>
+                        <div className="font-medium">{subject.name}</div>
+                        <div className="text-sm text-muted-foreground">{subject.file_name}</div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

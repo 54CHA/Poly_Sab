@@ -125,7 +125,6 @@ const Main = () => {
 
       if (error) throw error;
 
-      // Process the data to flatten the categories
       const processedData = data.map(subject => ({
         ...subject,
         categories: subject.subject_categories
@@ -641,7 +640,7 @@ const Main = () => {
                                   Непроверенный ответ
                                 </span>
                               </div>
-                              2
+                              
                             </div>
                           )}
                         </div>

@@ -29,7 +29,6 @@ export default function SubjectsSidebar({
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [filterByCategories, setFilterByCategories] = useState(false);
 
-  // Get unique categories from all subjects
   const categories = useMemo(() => {
     const uniqueCategories = new Set();
     subjects.forEach((subject) => {
@@ -40,11 +39,9 @@ export default function SubjectsSidebar({
     return Array.from(uniqueCategories).sort();
   }, [subjects]);
 
-  // Filter and group subjects based on search query and selected categories
   const filteredGroupedSubjects = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    
-    // Filter subjects first
+
     const filteredSubjects = subjects.filter((subject) => {
       const matchesSearch = !query || subject.name.toLowerCase().includes(query);
       const matchesCategories = !filterByCategories || selectedCategories.length === 0 || 
@@ -52,21 +49,18 @@ export default function SubjectsSidebar({
       return matchesSearch && matchesCategories;
     });
 
-    // If filtering by categories is enabled and categories are selected
     if (filterByCategories) {
       const categoryGroups = {};
       
       if (selectedCategories.length > 0) {
-        selectedCategories.forEach(categoryName => {
-          const subjectsInCategory = filteredSubjects.filter(subject =>
-            subject.categories?.some(cat => cat.name === categoryName)
-          );
-          if (subjectsInCategory.length > 0) {
-            categoryGroups[categoryName] = subjectsInCategory;
-          }
-        });
+        const categoryName = selectedCategories[0];
+        const subjectsInCategory = filteredSubjects.filter(subject =>
+          subject.categories?.some(cat => cat.name === categoryName)
+        );
+        if (subjectsInCategory.length > 0) {
+          categoryGroups[categoryName] = subjectsInCategory;
+        }
       } else {
-        // Show all categories when none selected
         filteredSubjects.forEach(subject => {
           if (subject.categories && subject.categories.length > 0) {
             subject.categories.forEach(category => {
@@ -84,7 +78,6 @@ export default function SubjectsSidebar({
         });
       }
 
-      // Sort the groups by category name
       const sortedGroups = {};
       Object.keys(categoryGroups)
         .sort((a, b) => a === "Без категории" ? 1 : b === "Без категории" ? -1 : a.localeCompare(b))
@@ -94,8 +87,7 @@ export default function SubjectsSidebar({
 
       return sortedGroups;
     }
-
-    // Group alphabetically
+    
     const groups = {};
     const nonRussianGroups = {};
     const russianPattern = /^[А-Яа-я]/;
@@ -123,16 +115,13 @@ export default function SubjectsSidebar({
   }, [subjects, searchQuery, selectedCategories, filterByCategories]);
 
   const handleCategoryToggle = (category) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
+    setSelectedCategories(prev =>
+      prev.includes(category) ? [] : [category]
     );
   };
 
   return (
     <>
-      {/* Mobile Dropdown - No Search */}
       <div className="md:hidden w-full">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
@@ -160,7 +149,6 @@ export default function SubjectsSidebar({
               </>
             )}
 
-            {/* Subjects list */}
             {Object.entries(filteredGroupedSubjects).map(([letter, letterSubjects]) => (
               <div key={letter}>
                 <DropdownMenuItem
@@ -198,7 +186,7 @@ export default function SubjectsSidebar({
                   variant="ghost"
                   size="sm"
                   onClick={onReset}
-                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                  className="h-6 px-2text-muted-foreground hover:text-foreground"
                 >
                   Сбросить
                 </Button>
@@ -231,7 +219,7 @@ export default function SubjectsSidebar({
                 </Button>
               </div>
               {filterByCategories && categories.length > 0 && (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
@@ -241,8 +229,8 @@ export default function SubjectsSidebar({
                       <div className="flex items-center gap-2">
                         <span>
                           {selectedCategories.length
-                            ? `Выбрано: ${selectedCategories.length}`
-                            : "Выберите категории"}
+                            ? selectedCategories[0]
+                            : "Выберите категорию"}
                         </span>
                       </div>
                       <ChevronDown className="h-4 w-4" />
