@@ -154,13 +154,20 @@ const Main = () => {
 
       if (error) throw error;
 
-      setSelectedSubject(subjectId);
-      setAnswers(data.answers);
-      setSubjectData(data);
-      setDisplayLimit(30);
-
-      localStorage.setItem("selectedSubjectId", subjectId.toString());
-      localStorage.setItem("answers", JSON.stringify(data.answers));
+      await Promise.all([
+        new Promise(resolve => {
+          setSelectedSubject(subjectId);
+          setAnswers(data.answers);
+          setSubjectData(data);
+          setDisplayLimit(30);
+          resolve();
+        }),
+        new Promise(resolve => {
+          localStorage.setItem("selectedSubjectId", subjectId.toString());
+          localStorage.setItem("answers", JSON.stringify(data.answers));
+          resolve();
+        })
+      ]);
 
       toast.dismiss(loadingToast);
       toast.success("Предмет загружен", {
