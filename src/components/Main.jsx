@@ -136,9 +136,7 @@ const Main = () => {
       const sortedSubjects = processedData.sort((a, b) => a.name.localeCompare(b.name));
       setSubjects(sortedSubjects);
     } catch (err) {
-      toast.error("Ошибка", {
-        description: "Не удалось загрузить список предметов",
-      });
+      console.error("Error fetching subjects:", err);
     }
   };
 
@@ -154,33 +152,18 @@ const Main = () => {
 
       if (error) throw error;
 
-      await Promise.all([
-        new Promise(resolve => {
-          setSelectedSubject(subjectId);
-          setAnswers(data.answers);
-          setSubjectData(data);
-          setDisplayLimit(30);
-          resolve();
-        }),
-        new Promise(resolve => {
-          localStorage.setItem("selectedSubjectId", subjectId.toString());
-          localStorage.setItem("answers", JSON.stringify(data.answers));
-          resolve();
-        })
-      ]);
+      setSelectedSubject(subjectId);
+      setAnswers(data.answers);
+      setSubjectData(data);
+      setDisplayLimit(30);
+
+      localStorage.setItem("selectedSubjectId", subjectId.toString());
+      localStorage.setItem("answers", JSON.stringify(data.answers));
 
       toast.dismiss(loadingToast);
-      toast.success("Предмет загружен", {
-        description: "Вопросы и ответы успешно загружены",
-        duration: 3000,
-      });
     } catch (error) {
       console.error("Error loading answers:", error);
       toast.dismiss(loadingToast);
-      toast.error("Ошибка", {
-        description: "Не удалось загрузить ответы",
-        duration: 3000,
-      });
     }
   };
 
@@ -308,9 +291,9 @@ const Main = () => {
     setDisplayLimit(30);
     localStorage.removeItem("selectedSubjectId");
     localStorage.removeItem("answers");
-    toast.success("Сброшено", {
-      description: "Выбранный предмет был сброшен",
-      duration: 3000,
+    toast.success("Предмет сброшен", {
+      duration: 1000,
+       style: { background: 'white', color: 'black', border: 'none' }
     });
   };
 
