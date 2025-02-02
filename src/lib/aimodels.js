@@ -1,5 +1,5 @@
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const API_URL = "/api/proxy";
 
 const MODELS = {
   deepseek: "deepseek-r1-distill-llama-70b",
@@ -21,7 +21,6 @@ export const getGeminiResponse = async (prompt, modelName = 'deepseek') => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: MODELS[modelName],

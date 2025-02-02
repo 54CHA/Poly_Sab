@@ -43,7 +43,7 @@ const ContactForm = () => {
     e.preventDefault();
     if (!formData.message.trim() || !formData.reason) {
       toast.error("Ошибка", {
-        description: "Выберите причину обращения и введите сообщение",
+        description: "Выберите причину обращения и введите сообщение", 
       });
       return;
     }
@@ -133,9 +133,9 @@ const ContactForm = () => {
           </div>
           <div>
             <Input
-              type="email"
-              placeholder="Ваш email (необязательно)"
-              value={formData.email}
+              type="text"
+              placeholder="Ваш контакт (необязательно)"
+              value={formData.text}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }
