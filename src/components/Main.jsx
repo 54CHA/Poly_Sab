@@ -11,7 +11,6 @@ import {
 } from "./ui/table";
 import {
   Search,
-  FileUp,
   Brain,
   Database,
   ChevronDown,
@@ -30,7 +29,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, textMatchesQuery } from "@/lib/utils";
 import AiChatPopup from "./AiChatPopup";
 import SubjectsSidebar from "./SubjectsSidebar";
 import MaterialsSection from "./MaterialsSection";
@@ -219,12 +218,11 @@ const Main = () => {
       return currentAnswers.slice(0, displayLimit);
     }
 
-    const query = searchQuery.toLowerCase();
     return currentAnswers
       .filter(
         (item) =>
-          item.question.toLowerCase().includes(query) ||
-          item.answer.toLowerCase().includes(query)
+          textMatchesQuery(item.question, searchQuery) ||
+          textMatchesQuery(item.answer, searchQuery)
       )
       .slice(0, displayLimit);
   }, [answers, localAnswers, selectedSubject, searchQuery, displayLimit]);
@@ -456,8 +454,7 @@ const Main = () => {
                       Поиск ответов
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Выберите предмет из базы данных или загрузите новый JSON
-                      файл
+                      Выберите предмет из базы данных для поиска ответов
                     </p>
                   </div>
                 </div>
@@ -472,8 +469,8 @@ const Main = () => {
                   Добавить свой ответ
                 </Button>
 
-                <div className="flex flex-col lg:flex-row gap-2">
-                  <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-[60%]">
+                <div className="flex flex-col xl:flex-row gap-2">
+                  <div className="flex flex-col lg:flex-row gap-2 w-full xl:w-[65%]">
                     <Input
                       type="text"
                       placeholder="Поиск..."
@@ -482,19 +479,12 @@ const Main = () => {
                       className="w-full"
                     />
                   </div>
-                  <div className="grid grid-cols-2 md:flex gap-2">
-                    <input
-                      type="file"
-                      id="file-input"
-                      className="hidden"
-                      accept=".json"
-                      onChange={handleFileUpload}
-                    />
+                  <div className="grid grid-cols-3 md:flex gap-2 w-full xl:w-[30%]">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="default"
-                          className="gap-2 w-full lg:w-auto"
+                          className="gap-2 w-full"
                         >
                           <Search className="h-4 w-4" />
                           Поиск
@@ -526,7 +516,7 @@ const Main = () => {
                     <Button
                       variant="default"
                       onClick={handleAiQuery}
-                      className="gap-2 w-full lg:w-auto"
+                      className="gap-2 w-full"
                     >
                       <Brain className="h-4 w-4" />
                       ИИ
@@ -534,33 +524,11 @@ const Main = () => {
                     <Button
                       variant="default"
                       onClick={() => setIsCalculatorOpen(true)}
-                      className="gap-2 w-full lg:w-auto"
+                      className="gap-2 w-full"
                     >
                       <CalculatorIcon className="h-4 w-4" />
                       <p className="block lg:hidden">Кальк.</p>
                     </Button>
-                    <TooltipProvider>
-                      <Tooltip delayDuration={50}>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="default"
-                            onClick={() =>
-                              document.getElementById("file-input").click()
-                            }
-                            className="gap-2 w-full lg:w-auto"
-                          >
-                            <FileUp className="h-4 w-4" />
-                            JSON
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <pre className="text-xs">
-                            Формат JSON: [{'"question": "...", "answer": "..."'}
-                            , ... ]
-                          </pre>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
                   </div>
                 </div>
               </div>
@@ -671,8 +639,7 @@ const Main = () => {
                 </div>
               </div>
 
-              {(localAnswers.length > displayLimit ||
-                (!localAnswers.length && answers.length > displayLimit)) && (
+              {filteredAnswers.length === displayLimit && (
                 <Button
                   variant="secondary"
                   onClick={handleLoadMore}
@@ -690,8 +657,7 @@ const Main = () => {
                 </div>
                 <h3 className="text-lg font-semibold">Выберите предмет</h3>
                 <p className="text-sm text-muted-foreground">
-                  Выберите предмет из списка или загрузите новый JSON файл с
-                  вопросами
+                  Выберите предмет из списка для поиска ответов
                 </p>
               </div>
             </div>

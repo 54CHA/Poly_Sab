@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard } from "lucide-react";
+import { BookOpen, LayoutDashboard, MessageSquare } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faRightFromBracket,
@@ -7,6 +7,7 @@ import {
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import ContactForm from "./ContactForm";
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -24,6 +25,7 @@ const Navbar = () => {
             </h1>
           </Link>
           <div className="flex items-center gap-2">
+            <ContactForm />
             {isAuthenticated && (
               <>
                 <Button variant="ghost" size="icon" asChild>

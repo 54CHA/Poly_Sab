@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { textMatchesQuery } from "@/lib/utils";
 
 export default function SubjectsSidebar({
   subjects,
@@ -41,7 +42,7 @@ export default function SubjectsSidebar({
     const query = searchQuery.toLowerCase();
 
     const filteredSubjects = subjects.filter((subject) => {
-      const matchesSearch = !query || subject.name.toLowerCase().includes(query);
+      const matchesSearch = !query || textMatchesQuery(subject.name, searchQuery);
       return matchesSearch;
     });
 
