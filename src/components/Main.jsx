@@ -33,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import AiChatPopup from "./AiChatPopup";
 import SubjectsSidebar from "./SubjectsSidebar";
+import MaterialsSection from "./MaterialsSection";
 import {
   Tooltip,
   TooltipContent,
@@ -57,6 +58,7 @@ const Main = () => {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [subjectData, setSubjectData] = useState(null);
+  const [isMaterialsVisible, setIsMaterialsVisible] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -291,7 +293,7 @@ const Main = () => {
     setDisplayLimit(30);
     localStorage.removeItem("selectedSubjectId");
     localStorage.removeItem("answers");
-    toast.success("Предмет сброшен", {
+    toast.success("Предмет успешно сброшен", {
       duration: 1000,
        style: { background: 'white', color: 'black', border: 'none' }
     });
@@ -565,28 +567,7 @@ const Main = () => {
             )}
           </div>
 
-          {selectedSubject && subjectData?.materials?.length > 0 && (
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
-              <div className="flex flex-col gap-2">
-                <div className="text-sm text-muted-foreground">
-                  Материалы по предмету:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {subjectData.materials.map((material, index) => (
-                    <a
-                      key={index}
-                      href={material.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-500 hover:underline"
-                    >
-                      {material.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {selectedSubject && <MaterialsSection materials={subjectData?.materials} />}
 
           {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
             <div className="space-y-4">
@@ -691,7 +672,8 @@ const Main = () => {
               </div>
 
               {(localAnswers.length > displayLimit ||
-                (!localAnswers.length && answers.length > displayLimit)) && (
+                (!localAnswers.length && answers.length > displayLimit)) &&
+                filteredAnswers.length === displayLimit && (
                 <Button
                   variant="secondary"
                   onClick={handleLoadMore}

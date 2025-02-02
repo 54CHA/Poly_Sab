@@ -250,11 +250,11 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                       <DropdownMenuItem onClick={() => setSelectedModel("deepseek")}>
                         DeepSeek R1 70B
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSelectedModel("llama")}>
+                        Llama 3.3 70B
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSelectedModel("mixtral")}>
                         Mixtral 8x7B
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel("llama")}>
-                        Llama 3.1 8B
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

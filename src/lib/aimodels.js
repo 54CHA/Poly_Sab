@@ -3,8 +3,8 @@ const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const MODELS = {
   deepseek: "deepseek-r1-distill-llama-70b",
+  llama: "llama-3.3-70b-versatile",
   mixtral: "mixtral-8x7b-32768",
-  llama: "llama3-70b-8192",
 };
 
 const removeThinkTags = (text) => {
