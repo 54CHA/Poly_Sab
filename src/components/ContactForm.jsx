@@ -51,7 +51,7 @@ const ContactForm = () => {
     setIsLoading(true);
     try {
       const reasonLabel = CONTACT_REASONS.find(r => r.value === formData.reason)?.label || formData.reason;
-      const text = `🔔 Новое сообщение\n\n📝 Тип: ${reasonLabel}\n📧 Email: ${
+      const text = `🔔 Новое сообщение\n\n📝 Тип: ${reasonLabel}\n📱 Контакт: ${
         formData.email || "Не указан"
       }\n\n💬 Сообщение:\n${formData.message}`;
 
@@ -135,7 +135,7 @@ const ContactForm = () => {
             <Input
               type="text"
               placeholder="Ваш контакт (необязательно)"
-              value={formData.text}
+              value={formData.email}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }

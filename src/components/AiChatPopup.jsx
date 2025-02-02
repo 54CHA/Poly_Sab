@@ -7,6 +7,9 @@ import { getGeminiResponse } from "@/lib/aimodels";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +53,8 @@ const Message = ({ message, onCopy }) => {
             <div className="w-full">
               <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                 <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
                   components={{
                     pre({ node, ...props }) {
                       return (
@@ -135,7 +140,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("deepseek");
+  const [selectedModel, setSelectedModel] = useState("mixtral");
   const messagesEndRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const inputRef = useRef(null);
@@ -193,7 +198,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     } catch (error) {
       setMessages((prev) => prev.slice(0, -1));
       toast.error("Ошибка", {
-        description: "Не удалось получить ответ от AI",
+        description: "Не удалось получить ответ от AI. Возможно, превышен лимит запросов для этой модели",
       });
     } finally {
       setIsLoading(false);
@@ -247,15 +252,16 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-[140px]" forceMount>
+                    <DropdownMenuItem onClick={() => setSelectedModel("mixtral")}>
+                        Mixtral 8x7B
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSelectedModel("deepseek")}>
                         DeepSeek R1 70B
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSelectedModel("llama")}>
                         Llama 3.3 70B
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel("mixtral")}>
-                        Mixtral 8x7B
-                      </DropdownMenuItem>
+                      
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
