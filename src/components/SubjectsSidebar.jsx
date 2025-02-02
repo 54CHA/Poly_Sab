@@ -1,16 +1,15 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Database, ChevronDown, Search, Filter } from "lucide-react";
+import { Database, ChevronDown, Search} from "lucide-react";
 import { Input } from "./ui/input";
 import { useState, useMemo } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
-} from "./ui/dropdown-menu";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -23,11 +22,10 @@ export default function SubjectsSidebar({
   selectedSubject,
   onSubjectSelect,
   onReset,
-  groupedSubjects,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]);
   const [filterByCategories, setFilterByCategories] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const categories = useMemo(() => {
     const uniqueCategories = new Set();
@@ -44,39 +42,27 @@ export default function SubjectsSidebar({
 
     const filteredSubjects = subjects.filter((subject) => {
       const matchesSearch = !query || subject.name.toLowerCase().includes(query);
-      const matchesCategories = !filterByCategories || selectedCategories.length === 0 || 
-        subject.categories?.some(cat => selectedCategories.includes(cat.name));
-      return matchesSearch && matchesCategories;
+      return matchesSearch;
     });
 
     if (filterByCategories) {
       const categoryGroups = {};
       
-      if (selectedCategories.length > 0) {
-        const categoryName = selectedCategories[0];
-        const subjectsInCategory = filteredSubjects.filter(subject =>
-          subject.categories?.some(cat => cat.name === categoryName)
-        );
-        if (subjectsInCategory.length > 0) {
-          categoryGroups[categoryName] = subjectsInCategory;
-        }
-      } else {
-        filteredSubjects.forEach(subject => {
-          if (subject.categories && subject.categories.length > 0) {
-            subject.categories.forEach(category => {
-              if (!categoryGroups[category.name]) {
-                categoryGroups[category.name] = [];
-              }
-              categoryGroups[category.name].push(subject);
-            });
-          } else {
-            if (!categoryGroups["Без категории"]) {
-              categoryGroups["Без категории"] = [];
+      filteredSubjects.forEach(subject => {
+        if (subject.categories && subject.categories.length > 0) {
+          subject.categories.forEach(category => {
+            if (!categoryGroups[category.name]) {
+              categoryGroups[category.name] = [];
             }
-            categoryGroups["Без категории"].push(subject);
+            categoryGroups[category.name].push(subject);
+          });
+        } else {
+          if (!categoryGroups["Без категории"]) {
+            categoryGroups["Без категории"] = [];
           }
-        });
-      }
+          categoryGroups["Без категории"].push(subject);
+        }
+      });
 
       const sortedGroups = {};
       Object.keys(categoryGroups)
@@ -112,21 +98,15 @@ export default function SubjectsSidebar({
       ...groups,
       ...nonRussianGroups,
     };
-  }, [subjects, searchQuery, selectedCategories, filterByCategories]);
-
-  const handleCategoryToggle = (category) => {
-    setSelectedCategories(prev =>
-      prev.includes(category) ? [] : [category]
-    );
-  };
+  }, [subjects, searchQuery, filterByCategories]);
 
   return (
     <>
       <div className="md:hidden w-full">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
             <Button variant="outline" className="w-full gap-2 justify-between">
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-2 truncate flex-1 min-w-0">
                 <Database className="h-4 w-4 shrink-0" />
                 <span className="truncate">
                   {subjects.find((s) => s.id === selectedSubject)?.name ||
@@ -135,44 +115,101 @@ export default function SubjectsSidebar({
               </div>
               <ChevronDown className="h-4 w-4 shrink-0" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="w-[var(--radix-dropdown-trigger-width)] max-h-[60vh] overflow-y-auto"
-          >
-            {selectedSubject && (
-              <>
-                <DropdownMenuItem onClick={onReset}>
-                  Сбросить выбор
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-
-            {Object.entries(filteredGroupedSubjects).map(([letter, letterSubjects]) => (
-              <div key={letter}>
-                <DropdownMenuItem
-                  className="text-sm text-muted-foreground"
-                  disabled
-                >
-                  {letter}
-                </DropdownMenuItem>
-                {letterSubjects.map((subject) => (
-                  <DropdownMenuItem
-                    key={subject.id}
-                    onClick={() => onSubjectSelect(subject.id)}
-                    className="pl-6"
-                  >
-                    <div className="flex flex-col w-full py-1">
-                      <div className="truncate">{subject.name}</div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-full sm:max-w-lg p-0">
+            <div className="flex flex-col h-full">
+              <div className="p-4 border-b">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Выберите предмет</SheetTitle>
+                </SheetHeader>
+                
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Поиск предмета..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg">
+                    <button
+                      onClick={() => setFilterByCategories(false)}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-md transition-colors",
+                        !filterByCategories
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Алфавит
+                    </button>
+                    <button
+                      onClick={() => setFilterByCategories(true)}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-md transition-colors",
+                        filterByCategories
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Категории
+                    </button>
+                  </div>
+                </div>
               </div>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+              <div className="flex-1 overflow-y-auto">
+                <div className="divide-y">
+                  {Object.entries(filteredGroupedSubjects).map(([group, groupSubjects]) => (
+                    <div key={group} className="space-y-1 py-2">
+                      <div className="text-sm font-medium text-muted-foreground px-4 sticky top-0 bg-background/95 backdrop-blur py-2 z-10">
+                        {group}
+                      </div>
+                      {groupSubjects.map((subject) => (
+                        <button
+                          key={subject.id}
+                          onClick={() => {
+                            onSubjectSelect(subject.id);
+                            setIsSheetOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 transition-colors",
+                            "hover:bg-muted/50",
+                            selectedSubject === subject.id && "bg-muted"
+                          )}
+                        >
+                          <div className="font-medium">{subject.name}</div>
+                          <div className="text-sm text-muted-foreground mt-0.5">
+                            {subject.questions_count} вопросов
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedSubject && (
+                <div className="p-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      onReset();
+                      setIsSheetOpen(false);
+                    }}
+                  >
+                    Сбросить выбор
+                  </Button>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Desktop Sidebar - With Search */}
@@ -186,13 +223,13 @@ export default function SubjectsSidebar({
                   variant="ghost"
                   size="sm"
                   onClick={onReset}
-                  className="h-6 px-2text-muted-foreground hover:text-foreground"
+                  className="h-6 px-2 text-muted-foreground hover:text-foreground"
                 >
                   Сбросить
                 </Button>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -203,63 +240,41 @@ export default function SubjectsSidebar({
                   className="pl-8"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={filterByCategories ? "default" : "outline"}
-                  size="sm"
-                  className="w-full justify-between"
-                  onClick={() => setFilterByCategories(!filterByCategories)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    <span>
-                      {filterByCategories ? "По категориям" : "По алфавиту"}
-                    </span>
-                  </div>
-                </Button>
-              </div>
-              {filterByCategories && categories.length > 0 && (
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>
-                          {selectedCategories.length
-                            ? selectedCategories[0]
-                            : "Выберите категорию"}
-                        </span>
-                      </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-[var(--radix-dropdown-trigger-width)]"
+              
+              <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg">
+                  <button
+                    onClick={() => setFilterByCategories(false)}
+                    className={cn(
+                      "px-3 py-1.5 text-sm rounded-md transition-colors",
+                      !filterByCategories
+                        ? "bg-white text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
                   >
-                    {categories.map((category) => (
-                      <DropdownMenuCheckboxItem
-                        key={category}
-                        checked={selectedCategories.includes(category)}
-                        onCheckedChange={() => handleCategoryToggle(category)}
-                      >
-                        {category}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                    Алфавит
+                  </button>
+                  <button
+                    onClick={() => setFilterByCategories(true)}
+                    className={cn(
+                      "px-3 py-1.5 text-sm rounded-md transition-colors",
+                      filterByCategories
+                        ? "bg-white text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Категории
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           <div
             className="space-y-4 overflow-y-auto pr-2 mt-3"
             style={{ 
               height: filterByCategories 
-                ? "calc(100% - 10rem)" 
-                : "calc(100% - 120px)" 
+                ? "calc(100% - 130px)" 
+                : "calc(100% - 130px)" 
             }}
           >
             {Object.entries(filteredGroupedSubjects).map(
