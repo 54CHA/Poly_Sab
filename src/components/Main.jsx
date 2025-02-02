@@ -672,8 +672,7 @@ const Main = () => {
               </div>
 
               {(localAnswers.length > displayLimit ||
-                (!localAnswers.length && answers.length > displayLimit)) &&
-                filteredAnswers.length === displayLimit && (
+                (!localAnswers.length && answers.length > displayLimit)) && (
                 <Button
                   variant="secondary"
                   onClick={handleLoadMore}
