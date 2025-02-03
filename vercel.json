@@ -4,6 +4,10 @@
     {
       "src": "/api/proxy",
       "dest": "/api/proxy.js"
+    },
+    {
+      "src": "/api/telegram",
+      "dest": "/api/telegram.js"
     }
   ]
 }

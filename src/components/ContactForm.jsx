@@ -20,9 +20,6 @@ import {
 } from "./ui/select";
 import { MessageSquare } from "lucide-react";
 
-const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
-
 const CONTACT_REASONS = [
   { value: "bug", label: "Сообщить об ошибке" },
   { value: "complaint", label: "Жалоба" },
@@ -43,7 +40,7 @@ const ContactForm = () => {
     e.preventDefault();
     if (!formData.message.trim() || !formData.reason) {
       toast.error("Ошибка", {
-        description: "Выберите причину обращения и введите сообщение", 
+        description: "Выберите причину обращения и введите сообщение",
       });
       return;
     }
@@ -55,20 +52,13 @@ const ContactForm = () => {
         formData.email || "Не указан"
       }\n\n💬 Сообщение:\n${formData.message}`;
 
-      const response = await fetch(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text,
-            parse_mode: "HTML",
-          }),
-        }
-      );
+      const response = await fetch("/api/telegram", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
 
       if (!response.ok) throw new Error("Failed to send message");
 
