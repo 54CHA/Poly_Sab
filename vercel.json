@@ -10,7 +10,54 @@
       "dest": "/api/telegram.js"
     },
     {
-      "src": "/(.*)",
+      "src": "^/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "^/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "^/favicon.png",
+      "dest": "/favicon.png"
+    },
+    {
+      "src": "^/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "^/robots.txt",
+      "dest": "/robots.txt"
+    },
+    {
+      "src": "^/sitemap.xml",
+      "dest": "/sitemap.xml"
+    },
+    {
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/login",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/admin$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/admin/categories",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/admin/unverified",
+      "dest": "/index.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": ".*",
       "dest": "/index.html"
     }
   ]
