@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import TelegramBanner from "./TelegramPopup";
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
   X,
   ArrowUp,
   Calculator as CalculatorIcon,
+  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
@@ -389,7 +391,9 @@ const Main = () => {
   };
 
   return (
+    
     <main className="max-w-[1200px] mx-auto p-4 sm:p-6">
+      <TelegramBanner />
       <div className="flex flex-col md:flex-row gap-6">
         <SubjectsSidebar
           subjects={subjects}
