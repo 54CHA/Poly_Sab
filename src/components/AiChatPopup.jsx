@@ -178,11 +178,10 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
   // Helper function to get model display name
   const getModelDisplayName = (modelKey) => {
     const modelNames = {
-      "llama-3.3-405b": "Llama 3.3 405B",
       "llama-3.3-70b": "Llama 3.3 70B",
       "deepseek-r1": "DeepSeek R1",
       "gemma2-9b": "Gemma 2 9B",
-      "qwen-2.5-72b": "Qwen 2.5 72B",
+      "qwen-qwq-32b": "Qwen QwQ 32B",
     };
     return modelNames[modelKey] || modelKey;
   };
@@ -276,19 +275,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                       className="w-[180px]"
                       forceMount
                     >
-                      {/* Most Capable Models */}
-                      <DropdownMenuItem
-                        onClick={() => setSelectedModel("llama-3.3-405b")}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">Llama 3.3 405B</span>
-                          <span className="text-xs text-muted-foreground">
-                            Самая мощная
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-
-                      {/* Balanced Models */}
+                      {/* Recommended Model */}
                       <DropdownMenuItem
                         onClick={() => setSelectedModel("llama-3.3-70b")}
                       >
@@ -301,12 +288,12 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => setSelectedModel("qwen-2.5-72b")}
+                        onClick={() => setSelectedModel("qwen-qwq-32b")}
                       >
                         <div className="flex flex-col">
-                          <span className="font-medium">Qwen 2.5 72B</span>
+                          <span className="font-medium">Qwen QwQ 32B</span>
                           <span className="text-xs text-muted-foreground">
-                            Многоязычная
+                            Продвинутое мышление
                           </span>
                         </div>
                       </DropdownMenuItem>

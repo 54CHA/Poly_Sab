@@ -1,15 +1,11 @@
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const API_URL = "/api/proxy";
 
 const MODELS = {
   // Latest and most capable models
-  "llama-3.3-405b": "llama-3.3-405b-instruct", // Most capable Llama model
   "llama-3.3-70b": "llama-3.3-70b-versatile", // Fast and capable
-  "llama-3.1-70b": "llama-3.1-70b-versatile", // Reliable alternative
   "deepseek-r1": "deepseek-r1-distill-llama-70b", // Good reasoning
-  "mixtral-8x7b": "mixtral-8x7b-32768", // Fast and efficient
   "gemma2-9b": "gemma2-9b-it", // Lightweight but capable
-  "qwen-2.5-72b": "qwen-2.5-72b-instruct", // Strong multilingual
+  "qwen-qwq-32b": "qwen-qwq-32b-preview", // Advanced reasoning model
 };
 
 const removeThinkTags = (text) => {
