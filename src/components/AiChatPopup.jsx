@@ -1,7 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Send, Brain, Maximize2, Minimize2, Bot, Copy, ChevronDown } from "lucide-react";
+import {
+  X,
+  Send,
+  Brain,
+  Maximize2,
+  Minimize2,
+  Bot,
+  Copy,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGeminiResponse } from "@/lib/aimodels";
 import { toast } from "sonner";
@@ -140,7 +149,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("mixtral");
+  const [selectedModel, setSelectedModel] = useState("llama-3.3-70b");
   const messagesEndRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const inputRef = useRef(null);
@@ -164,6 +173,18 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     toast.success("Скопировано", {
       description: "Текст скопирован в буфер обмена",
     });
+  };
+
+  // Helper function to get model display name
+  const getModelDisplayName = (modelKey) => {
+    const modelNames = {
+      "llama-3.3-405b": "Llama 3.3 405B",
+      "llama-3.3-70b": "Llama 3.3 70B",
+      "deepseek-r1": "DeepSeek R1",
+      "gemma2-9b": "Gemma 2 9B",
+      "qwen-2.5-72b": "Qwen 2.5 72B",
+    };
+    return modelNames[modelKey] || modelKey;
   };
 
   const handleSubmit = async (e) => {
@@ -198,7 +219,8 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
     } catch (error) {
       setMessages((prev) => prev.slice(0, -1));
       toast.error("Ошибка", {
-        description: "Не удалось получить ответ от AI. Возможно, превышен лимит запросов для этой модели",
+        description:
+          "Не удалось получить ответ от AI. Возможно, превышен лимит запросов для этой модели",
       });
     } finally {
       setIsLoading(false);
@@ -241,27 +263,76 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                 <div className="flex items-center gap-2">
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         className="h-6 px-2 text-xs hover:bg-muted/50 flex items-center gap-1"
                       >
-                        {selectedModel === "deepseek" && "DeepSeek"}
-                        {selectedModel === "mixtral" && "Mixtral"}
-                        {selectedModel === "llama" && "Llama"}
+                        {getModelDisplayName(selectedModel)}
                         <ChevronDown className="h-3 w-3 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-[140px]" forceMount>
-                    <DropdownMenuItem onClick={() => setSelectedModel("mixtral")}>
-                        Mixtral 8x7B
+                    <DropdownMenuContent
+                      align="start"
+                      className="w-[180px]"
+                      forceMount
+                    >
+                      {/* Most Capable Models */}
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("llama-3.3-405b")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">Llama 3.3 405B</span>
+                          <span className="text-xs text-muted-foreground">
+                            Самая мощная
+                          </span>
+                        </div>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel("deepseek")}>
-                        DeepSeek R1 70B
+
+                      {/* Balanced Models */}
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("llama-3.3-70b")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">Llama 3.3 70B</span>
+                          <span className="text-xs text-muted-foreground">
+                            Рекомендуемая
+                          </span>
+                        </div>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel("llama")}>
-                        Llama 3.3 70B
+
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("qwen-2.5-72b")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">Qwen 2.5 72B</span>
+                          <span className="text-xs text-muted-foreground">
+                            Многоязычная
+                          </span>
+                        </div>
                       </DropdownMenuItem>
-                      
+
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("deepseek-r1")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">DeepSeek R1</span>
+                          <span className="text-xs text-muted-foreground">
+                            Логическое мышление
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      {/* Fast/Lightweight */}
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("gemma2-9b")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">Gemma 2 9B</span>
+                          <span className="text-xs text-muted-foreground">
+                            Быстрая
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
