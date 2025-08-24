@@ -87,9 +87,9 @@ const ContactForm = () => {
       <SheetTrigger asChild>
         <Button
           variant="ghost"
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200 rounded-lg p-3 h-auto w-auto"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200 rounded-xl p-3 h-auto w-auto"
         >
-          <MessageSquare className="h-5 w-5" />
+          <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-[400px] h-full sm:h-auto" side="right">
