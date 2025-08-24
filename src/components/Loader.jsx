@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const Loader = ({ className }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <Loader2 className={cn("h-12 w-12 animate-spin text-primary", className)} />
     </div>
   );

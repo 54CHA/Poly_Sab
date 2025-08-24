@@ -5,7 +5,7 @@ const MODELS = {
   "llama-3.3-70b": "llama-3.3-70b-versatile", // Fast and capable
   "deepseek-r1": "deepseek-r1-distill-llama-70b", // Good reasoning
   "gemma2-9b": "gemma2-9b-it", // Lightweight but capable
-  "qwen-qwq-32b": "qwen-qwq-32b-preview", // Advanced reasoning model
+  "openai/gpt-oss-120b": "openai/gpt-oss-120b", // Powerful model
 };
 
 const removeThinkTags = (text) => {

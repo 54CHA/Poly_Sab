@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import TelegramBanner from "./TelegramPopup";
 import {
   Table,
   TableBody,
@@ -114,9 +113,7 @@ const Main = () => {
 
   const fetchSubjects = async () => {
     try {
-      const { data, error } = await supabase
-        .from("subjects")
-        .select(`
+      const { data, error } = await supabase.from("subjects").select(`
           id, 
           name, 
           questions_count, 
@@ -128,15 +125,18 @@ const Main = () => {
 
       if (error) throw error;
 
-      const processedData = data.map(subject => ({
+      const processedData = data.map((subject) => ({
         ...subject,
-        categories: subject.subject_categories
-          ?.map(sc => sc.category)
-          .filter(Boolean)
-          .sort((a, b) => a.name.localeCompare(b.name)) || []
+        categories:
+          subject.subject_categories
+            ?.map((sc) => sc.category)
+            .filter(Boolean)
+            .sort((a, b) => a.name.localeCompare(b.name)) || [],
       }));
 
-      const sortedSubjects = processedData.sort((a, b) => a.name.localeCompare(b.name));
+      const sortedSubjects = processedData.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
       setSubjects(sortedSubjects);
     } catch (err) {
       console.error("Error fetching subjects:", err);
@@ -295,7 +295,7 @@ const Main = () => {
     localStorage.removeItem("answers");
     toast.success("Предмет успешно сброшен", {
       duration: 1000,
-       style: { background: 'white', color: 'black', border: 'none' }
+      style: { background: "white", color: "black", border: "none" },
     });
   };
 
@@ -391,9 +391,7 @@ const Main = () => {
   };
 
   return (
-    
-    <main className="max-w-[1200px] mx-auto p-4 sm:p-6">
-      <TelegramBanner />
+    <main className="max-w-[1200px] mt-12 mx-auto p-4 sm:p-6">
       <div className="flex flex-col md:flex-row gap-6">
         <SubjectsSidebar
           subjects={subjects}
@@ -404,134 +402,124 @@ const Main = () => {
         />
 
         <div className="flex-1 space-y-6">
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 sm:p-6">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
             {isAddingAnswer ? (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold tracking-tight">
-                    Добавить ответ
-                  </h2>
-                  <Button variant="ghost" size="sm" onClick={handleCancelAdd}>
-                    <X className="h-4 w-4 mr-2" />
-                    Отмена
+                  <div>
+                    <h2 className="text-lg font-medium">Добавить ответ</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Новый ответ будет отмечен как непроверенный
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleCancelAdd} className="text-xs">
+                       Отмена<X className="h-3 w-3" />
+                 
                   </Button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">
-                      Вопрос
-                    </label>
                     <Input
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
-                      placeholder="Введите вопрос"
+                      placeholder="Введите вопрос..."
+                      className="h-9 text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-1 block">
-                      Ответ
-                    </label>
                     <Input
                       value={newAnswer}
                       onChange={(e) => setNewAnswer(e.target.value)}
-                      placeholder="Введите ответ"
+                      placeholder="Введите ответ..."
+                      className="h-9 text-sm"
                     />
                   </div>
-
-                  <div className="flex items-center text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                    <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <p>Ваш ответ будет помечен как непроверенный.</p>
+                  
+                  <div className="flex gap-2 pt-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleAddAnswer} 
+                      className="h-8 px-3 text-xs bg-black text-white border-black hover:bg-black/90 hover:text-white flex-1"
+                    >
+                      Добавить ответ
+                    </Button>
+                   
                   </div>
-
-                  <Button className="w-full" onClick={handleAddAnswer}>
-                    Добавить ответ
-                  </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4 sm:gap-6">
-                <div className="flex justify-between items-center">
-                  <div className="space-y-2">
-                    <h2 className="text-2xl font-semibold tracking-tight">
-                      Поиск ответов
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Выберите предмет из базы данных для поиска ответов
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-medium">Поиск ответов</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Найдите ответы или воспользуйтесь внешним поиском
                     </p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingAnswer(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                    disabled={!selectedSubject}
+                  >
+                    <PlusCircle className="h-3 w-3 mr-1" />
+                    Добавить свой ответ
+                  </Button>
                 </div>
 
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAddingAnswer(true)}
-                  className="w-full"
-                  disabled={!selectedSubject}
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Добавить свой ответ
-                </Button>
-
-                <div className="flex flex-col xl:flex-row gap-2">
-                  <div className="flex flex-col lg:flex-row gap-2 w-full xl:w-[65%]">
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Поиск..."
+                      placeholder="Введите ваш вопрос..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full"
+                      className="pl-10 h-9 text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-3 md:flex gap-2 w-full xl:w-[30%]">
+                  
+                  <div className="flex gap-1.5">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="default"
-                          className="gap-2 w-full"
-                        >
-                          <Search className="h-4 w-4" />
-                          Поиск
-                          <ChevronDown className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="h-8 px-3 text-xs bg-black text-white border-black hover:bg-black/90 hover:text-white">
+                          Поиск в интернете
+                          <ChevronDown className="h-3 w-3 ml-1" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        sideOffset={5}
-                        className="w-[var(--radix-dropdown-trigger-width)]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => handleSearch("duckduckgo")}
-                        >
-                          DuckDuckGo
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => handleSearch("google")}>
+                          <span className="text-sm">Google</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleSearch("google")}
-                        >
-                          Google
+                        <DropdownMenuItem onClick={() => handleSearch("yandex")}>
+                          <span className="text-sm">Яндекс</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleSearch("yandex")}
-                        >
-                          Яндекс
+                        <DropdownMenuItem onClick={() => handleSearch("duckduckgo")}>
+                          <span className="text-sm">DuckDuckGo</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    
                     <Button
-                      variant="default"
-                      onClick={handleAiQuery}
-                      className="gap-2 w-full"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAiChatOpen(true)}
+                      className="h-8 px-2 text-xs bg-black text-white border-black hover:bg-black/90 hover:text-white"
                     >
-                      <Brain className="h-4 w-4" />
-                      ИИ
+                     ИИ <MessageCircle className="h-3 w-3" />
                     </Button>
+                    
                     <Button
-                      variant="default"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setIsCalculatorOpen(true)}
-                      className="gap-2 w-full"
+                      className="h-8 px-2 text-xs bg-black text-white border-black hover:bg-black/90 hover:text-white"
                     >
-                      <CalculatorIcon className="h-4 w-4" />
-                      <p className="block lg:hidden">Кальк.</p>
+                      <CalculatorIcon className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -539,7 +527,9 @@ const Main = () => {
             )}
           </div>
 
-          {selectedSubject && <MaterialsSection materials={subjectData?.materials} />}
+          {selectedSubject && (
+            <MaterialsSection materials={subjectData?.materials} />
+          )}
 
           {(localAnswers.length > 0 ? localAnswers : answers).length > 0 ? (
             <div className="space-y-4">
@@ -583,7 +573,6 @@ const Main = () => {
                                   Непроверенный ответ
                                 </span>
                               </div>
-                              
                             </div>
                           )}
                         </div>
@@ -656,7 +645,7 @@ const Main = () => {
           ) : (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-12">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="rounded-full bg-primary/10 p-4">
+                <div className="rounded-xl bg-primary/10 p-4 ">
                   <Database className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold">Выберите предмет</h3>

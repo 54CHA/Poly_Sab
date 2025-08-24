@@ -7,7 +7,7 @@ import {
   Brain,
   Maximize2,
   Minimize2,
-  Bot,
+  BookOpen,
   Copy,
   ChevronDown,
 } from "lucide-react";
@@ -45,7 +45,7 @@ const Message = ({ message, onCopy }) => {
       <div className="flex items-start gap-2">
         {message.role === "assistant" && (
           <div className="mt-0.5 rounded-md bg-primary/10 p-1">
-            <Bot className="h-4 w-4 text-primary" />
+            <BookOpen className="h-4 w-4 text-primary" />
           </div>
         )}
         <div
@@ -181,7 +181,7 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
       "llama-3.3-70b": "Llama 3.3 70B",
       "deepseek-r1": "DeepSeek R1",
       "gemma2-9b": "Gemma 2 9B",
-      "qwen-qwq-32b": "Qwen QwQ 32B",
+      "studioopenai/gpt-oss-120b": "GPT OSS 120B",
     };
     return modelNames[modelKey] || modelKey;
   };
@@ -253,12 +253,9 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
           )}
         >
           <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-            <div className="flex items-center gap-2">
-              <div className="rounded-md bg-primary/10 p-1.5">
-                <Brain className="h-5 w-5 text-primary" />
-              </div>
+            <div className="flex items-center gap-2 ml-3">
               <div>
-                <h3 className="font-semibold">AI Ассистент</h3>
+                <h3 className="font-semibold">ИИ Ассистент</h3>
                 <div className="flex items-center gap-2">
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
@@ -288,23 +285,23 @@ const AiChatPopup = ({ isOpen, onClose, initialQuery = "" }) => {
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                        onClick={() => setSelectedModel("qwen-qwq-32b")}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">Qwen QwQ 32B</span>
-                          <span className="text-xs text-muted-foreground">
-                            Продвинутое мышление
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
                         onClick={() => setSelectedModel("deepseek-r1")}
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">DeepSeek R1</span>
                           <span className="text-xs text-muted-foreground">
                             Логическое мышление
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() => setSelectedModel("studioopenai/gpt-oss-120b")}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">GPT OSS 120B</span>
+                          <span className="text-xs text-muted-foreground">
+                            Мощная модель
                           </span>
                         </div>
                       </DropdownMenuItem>
